@@ -18,16 +18,6 @@ return new class extends Migration
             $table->dropColumn('kelas_id');
         }
     });
-
-    // 2. Membuat tabel pivot kelas_voucher
-    Schema::create('kelas_voucher', function (Blueprint $table) {
-        $table->id();
-        // Menghubungkan ke tabel vouchers
-        $table->foreignId('voucher_id')->constrained('vouchers')->onDelete('cascade');
-        // Menghubungkan ke tabel kelas
-        $table->foreignId('kelas_id')->constrained('kelas')->onDelete('cascade');
-        $table->timestamps();
-    });
 }
 
 public function down()
