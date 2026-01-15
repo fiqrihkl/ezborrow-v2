@@ -11,11 +11,6 @@ return new class extends Migration
      */
     public function up()
 {
-    // 1. Modifikasi tabel vouchers (Hapus kolom kelas_id lama)
-    Schema::table('vouchers', function (Blueprint $table) {
-        $table->dropForeign(['kelas_id']); // Jika ada foreign key
-        $table->dropColumn('kelas_id');
-    });
 
     // 2. Buat tabel pivot
     Schema::create('kelas_voucher', function (Blueprint $table) {
