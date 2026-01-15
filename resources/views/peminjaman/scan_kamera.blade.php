@@ -289,11 +289,10 @@
     let isProcessing = false;
     const qrConfig = { fps: 25, qrbox: { width: 180, height: 180 }, aspectRatio: 1.0 };
 
-    // --- FUNGSI AUDIO ---
     function playAudio(id) {
         const audio = document.getElementById(id);
         if (audio) {
-            audio.currentTime = 0; // Reset ke awal jika suara masih main
+            audio.currentTime = 0;
             audio.play().catch(e => console.log("Audio play blocked: ", e));
         }
     }
@@ -303,14 +302,13 @@
         checkFlashMessages();
     };
 
-    // --- SCANNER SISWA (STEP 1) ---
     function startScannerSiswa() {
         isProcessing = false;
         if (scannerSiswa) scannerSiswa.clear();
         scannerSiswa = new Html5Qrcode("reader-siswa");
         scannerSiswa.start({ facingMode: "environment" }, qrConfig, (qr) => {
             if (isProcessing) return;
-            playAudio('audioScan'); // Suara saat scan terdeteksi
+            playAudio('audioScan');
             processSiswaScan(qr);
         }).catch(err => console.error(err));
     }
@@ -335,7 +333,7 @@
                         }
                     });
                 } else {
-                    playAudio('audioError'); // Suara saat scan gagal (Siswa tidak terdaftar)
+                    playAudio('audioError');
                     Swal.fire({
                         icon: 'error',
                         title: 'AKSES DITOLAK',
@@ -348,7 +346,6 @@
             });
     }
 
-    // --- HANDLING GURU & MAPEL (STEP 2) ---
     document.getElementById('guru_id_select').addEventListener('change', function() {
         const mSelect = document.getElementById('mapel_id_select');
         mSelect.disabled = true;
@@ -366,7 +363,6 @@
         setTimeout(() => goToStep(3), 400);
     });
 
-    // --- SCANNER UNIT CHROMEBOOK (STEP 3) ---
     function startScannerUnit() {
         isProcessing = false;
         document.getElementById('val-guru').value = document.getElementById('guru_id_select').value;
@@ -376,7 +372,7 @@
         scannerUnit.start({ facingMode: "environment" }, qrConfig, (qr) => {
             if (isProcessing) return;
             isProcessing = true;
-            playAudio('audioScan'); // Suara saat scan unit
+            playAudio('audioScan');
             document.getElementById('val-qr').value = qr;
             scannerUnit.stop().then(() => {
                 Swal.fire({
@@ -390,7 +386,6 @@
         });
     }
 
-    // --- SCANNER VERIFIKASI UNIT (PENGEMBALIAN) ---
     function startScannerKembali() {
         isProcessing = false;
         if (scannerKembali) scannerKembali.clear();
@@ -398,7 +393,7 @@
         scannerKembali.start({ facingMode: "environment" }, qrConfig, (qr) => {
             if (isProcessing) return;
             isProcessing = true;
-            playAudio('audioScan'); // Suara saat scan verifikasi kembali
+            playAudio('audioScan');
             document.getElementById('val-qr-kembali').value = qr;
             scannerKembali.stop().then(() => {
                 Swal.fire({ title: 'Memproses...', showConfirmButton: false, didOpen: () => Swal.showLoading() });
@@ -407,7 +402,6 @@
         });
     }
 
-    // --- NAVIGATION LOGIC ---
     function goToStep(step) {
         const flipContent = document.getElementById('flip-content');
         flipContent.classList.add('is-flipping');
@@ -443,64 +437,71 @@
         setTimeout(() => { flipContent.classList.remove('is-flipping'); }, 600);
     }
 
-    // --- FLASH MESSAGES & SOUNDS ---
+    // --- LOGIKA PESAN (SWEETALERT) ---
     function checkFlashMessages() {
-        // KONDISI BERHASIL (PINJAM DENGAN VOUCHER ATAU KEMBALI BIASA)
-        @if(session('voucher_baru') || session('success'))
-            playAudio('audioSuccess'); 
-            
-            @if(session('voucher_baru'))
-                Swal.fire({
-                    title: `<div style="font-weight: 800; color: #1e293b; margin-top: 10px;">BERHASIL DIPINJAM</div>`,
-                    html: `
-                        <div style="padding: 0 5px; font-family: 'Inter', sans-serif;">
-                            <p style="color: #64748b; font-size: 14px; margin-bottom: 20px;">Silakan catat kode voucher WiFi Anda:</p>
-                            <div style="background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
-                                        border-radius: 20px; padding: 30px 15px; color: white; 
-                                        box-shadow: 0 15px 30px rgba(0,0,0,0.15); position: relative; overflow: hidden; margin-bottom: 20px;">
-                                <h2 style="font-family: 'Monaco', monospace; font-weight: 800; letter-spacing: 6px; margin: 0; font-size: 2.5rem;">
-                                    {{ session('voucher_baru') }}
-                                </h2>
-                                <div style="margin-top: 15px; font-size: 10px; color: #94a3b8;">
-                                    Expired: {{ date('H:i', strtotime('+2 hours')) }} WITA
-                                </div>
-                            </div>
-                            <div style="background: #fffbeb; border: 1px solid #fef3c7; border-radius: 12px; padding: 12px; display: flex; gap: 10px; align-items: center;">
-                                <i class="fas fa-exclamation-triangle" style="color: #f59e0b;"></i>
-                                <span style="font-size: 11px; color: #92400e; text-align: left;">JANGAN TUTUP sebelum mencatat. Kode hanya muncul sekali.</span>
-                            </div>
+    // 1. PRIORITAS: MODAL VOUCHER (PINJAM BERHASIL)
+    // Kita cek session voucher_baru terlebih dahulu
+    @if(session('voucher_baru'))
+        playAudio('audioSuccess');
+        
+        Swal.fire({
+            title: `<div style="font-weight: 800; color: #1e293b; margin-top: 10px;">BERHASIL DIPINJAM</div>`,
+            html: `
+                <div style="padding: 0 5px; font-family: 'Inter', sans-serif;">
+                    <p style="color: #64748b; font-size: 14px; margin-bottom: 20px;">Silakan catat kode voucher WiFi Anda:</p>
+                    <div style="background: linear-gradient(135deg, #1e293b 0%, #334155 100%); border-radius: 20px; padding: 30px 15px; color: white; box-shadow: 0 15px 30px rgba(0,0,0,0.15); margin-bottom: 20px;">
+                        <h2 style="font-family: 'Monaco', monospace; font-weight: 800; letter-spacing: 6px; margin: 0; font-size: 2.5rem;">
+                            {{ session('voucher_baru') }}
+                        </h2>
+                        <div style="margin-top: 15px; font-size: 10px; color: #94a3b8;">
+                            Expired: {{ date('H:i', strtotime('+2 hours')) }} WITA
                         </div>
-                    `,
-                    confirmButtonText: 'SAYA SUDAH CATAT / SELESAI',
-                    confirmButtonColor: '#1e293b',
-                    allowOutsideClick: false,
-                    width: '400px',
-                    customClass: { popup: 'rounded-5' }
-                });
-            @else
-                Swal.fire({
-                    icon: 'success',
-                    title: 'SUKSES',
-                    text: '{{ session("success") }}',
-                    timer: 5000,
-                    showConfirmButton: false,
-                    customClass: { popup: 'rounded-4' }
-                });
-            @endif
-        @endif
+                    </div>
+                    <div style="background: #fffbeb; border: 1px solid #fef3c7; border-radius: 12px; padding: 12px; display: flex; gap: 10px; align-items: center;">
+                        <i class="fas fa-exclamation-triangle" style="color: #f59e0b;"></i>
+                        <span style="font-size: 11px; color: #92400e;">JANGAN TUTUP sebelum mencatat. Kode hanya muncul sekali.</span>
+                    </div>
+                </div>`,
+            showConfirmButton: true,
+            confirmButtonText: 'SAYA SUDAH CATAT / SELESAI',
+            confirmButtonColor: '#1e293b',
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            // Paksa timer berhenti total
+            timer: undefined, 
+            timerProgressBar: false,
+            width: '400px',
+            customClass: { popup: 'rounded-5' }
+        });
 
-        // KONDISI GAGAL
-        @if(session('error'))
-            playAudio('audioError'); 
-            Swal.fire({
-                icon: 'error',
-                title: 'GAGAL',
-                text: '{{ session("error") }}',
-                timer: 5000,
-                showConfirmButton: false,
-                customClass: { popup: 'rounded-4' }
-            });
-        @endif
-    }
+    // 2. SUKSES BIASA (PENGEMBALIAN)
+    // Hanya muncul jika TIDAK ADA voucher_baru
+    @elseif(session('success'))
+        playAudio('audioSuccess');
+        Swal.fire({
+            icon: 'success',
+            title: 'SUKSES',
+            text: '{{ session("success") }}',
+            timer: 5000,
+            timerProgressBar: true,
+            showConfirmButton: false,
+            customClass: { popup: 'rounded-4' }
+        });
+    @endif
+
+    // 3. ERROR (GAGAL)
+    @if(session('error'))
+        playAudio('audioError');
+        Swal.fire({
+            icon: 'error',
+            title: 'GAGAL',
+            text: '{{ session("error") }}',
+            timer: 5000,
+            timerProgressBar: true,
+            showConfirmButton: false,
+            customClass: { popup: 'rounded-4' }
+        });
+    @endif
+}
 </script>
 @endsection

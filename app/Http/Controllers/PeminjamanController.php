@@ -159,7 +159,7 @@ class PeminjamanController extends Controller
             $chromebook = Chromebook::find($peminjaman->chromebook_id);
 
             if (trim($request->qr_chromebook_verifikasi) !== $chromebook->qr_code_unit) {
-                return back()->with('error', 'Gagal! Unit tidak cocok.');
+                return back()->with('error', 'Gagal! Chromebook yang dikembalikan tidak cocok.');
             }
 
             $peminjaman->update(['waktu_kembali' => now()]);
