@@ -1,0 +1,20 @@
+{
+    "name": "EZBorrow",
+    "short_name": "EZBorrow",
+    "start_url": "/",
+    "background_color": "#4361ee",
+    "theme_color": "#4361ee",
+    "display": "standalone",
+    "icons": [
+        {
+            "src": "assets/img/favicon.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "assets/img/favicon.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ]
+}

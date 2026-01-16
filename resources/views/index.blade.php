@@ -117,7 +117,7 @@
                 </a>
             @else
                 <a href="{{ route('login') }}" class="btn btn-primary rounded-pill fw-bold">
-                    <i class="bi bi-person-circle me-1"></i> Login Admin
+                    <i class="bi bi-person-circle me-1"></i> Login
                 </a>
             @endauth
         </div>

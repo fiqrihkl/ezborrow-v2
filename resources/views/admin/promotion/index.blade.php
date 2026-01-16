@@ -22,7 +22,7 @@
                 <div class="card border-0 shadow-sm rounded-4 sticky-top" style="top: 20px; z-index: 1;">
                     <div class="card-body p-4">
                         <div class="mb-4 text-center">
-                            <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-inline-flex align-items-center justify-content-center mb-2" style="width: 50px; height: 50px;">
+                            <div class="bg-secondary bg-opacity-10 text-primary rounded-circle d-inline-flex align-items-center justify-content-center mb-2" style="width: 50px; height: 50px;">
                                 <i class="bi bi-gear-fill fs-4"></i>
                             </div>
                             <h6 class="fw-bold d-block">Konfigurasi Kenaikan</h6>

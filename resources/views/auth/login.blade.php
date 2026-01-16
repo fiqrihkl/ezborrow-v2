@@ -125,7 +125,7 @@
                         </div>
 
                         <button type="submit" class="btn btn-primary w-100 btn-login text-uppercase mb-3">
-                            Masuk Ke Panel <i class="bi bi-arrow-right-short ms-1"></i>
+                            Login <i class="bi bi-arrow-right-short ms-1"></i>
                         </button>
 
                         <div class="text-center">

@@ -11,21 +11,42 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class SiswaController extends Controller
 {
-    public function index()
-    {
-        // Hanya tampilkan siswa yang masih sekolah (aktif/nonaktif skorsing)
-        // Gunakan Eager Loading 'kelas' agar query database efisien
-        $siswas = Siswa::with('kelas')
-            ->whereIn('status', ['aktif', 'nonaktif'])
-            ->latest()
-            ->paginate(15);
+    public function index(Request $request)
+{
+    // Mulai query dasar (Eager Loading kelas)
+    $query = Siswa::with('kelas');
 
-        return view('admin.siswa.index', compact('siswas'));
+    // Fitur Filter Status (PENTING)
+    if ($request->has('status') && $request->status != '') {
+        $query->where('status', $request->status);
+    } else {
+        // Default jika tidak ada filter status: Tampilkan Aktif & Nonaktif (Alumni disembunyikan)
+        $query->whereIn('status', ['aktif', 'nonaktif']);
     }
+
+    // Fitur Pencarian (Nama atau NIS)
+    if ($request->filled('search')) {
+        $search = $request->search;
+        $query->where(function($q) use ($search) {
+            $q->where('nama_siswa', 'like', "%$search%")
+              ->orWhere('nis', 'like', "%$search%");
+        });
+    }
+
+    // Fitur Filter Kelas
+    if ($request->filled('kelas_id')) {
+        $query->where('kelas_id', $request->kelas_id);
+    }
+
+    $siswas = $query->latest()->paginate(15)->withQueryString();
+    $kelases = Kelas::orderBy('nama_kelas', 'asc')->get();
+
+    return view('admin.siswa.index', compact('siswas', 'kelases'));
+}
 
     public function create()
     {
-        $kelas = Kelas::all();
+        $kelas = Kelas::orderBy('nama_kelas', 'asc')->get();
         return view('admin.siswa.create', compact('kelas'));
     }
 
@@ -40,12 +61,11 @@ class SiswaController extends Controller
             'kelas_id.required' => 'Wajib memilih kelas untuk siswa baru.'
         ]);
 
-        // unique_id tidak divalidasi di sini karena sudah dibuat otomatis di Model (boot method)
         Siswa::create([
             'nama_siswa' => $request->nama_siswa,
             'nis'        => $request->nis,
             'kelas_id'   => $request->kelas_id,
-            'status'     => 'aktif', // Default siswa baru adalah aktif
+            'status'     => 'aktif',
         ]);
 
         return redirect()->route('siswa.index')->with('success', 'Data Siswa berhasil ditambahkan.');
@@ -53,7 +73,7 @@ class SiswaController extends Controller
 
     public function edit(Siswa $siswa)
     {
-        $kelas = Kelas::all();
+        $kelas = Kelas::orderBy('nama_kelas', 'asc')->get();
         return view('admin.siswa.edit', compact('siswa', 'kelas'));
     }
 
@@ -66,69 +86,71 @@ class SiswaController extends Controller
             'status'     => 'required|in:aktif,nonaktif,alumni,keluar',
         ]);
 
-        // Jika status diubah ke 'keluar' atau 'alumni', lepaskan kelasnya
         $data = $request->all();
+
+        // CEK DATABASE: Jika database Ibu melarang NULL di kelas_id, 
+        // hapus atau beri komentar pada blok IF di bawah ini.
         if (in_array($request->status, ['keluar', 'alumni'])) {
-            $data['kelas_id'] = null;
+            // $data['kelas_id'] = null; // Aktifkan hanya jika database sudah NULLABLE
         }
 
         $siswa->update($data);
         return redirect()->route('siswa.index')->with('success', 'Data Siswa berhasil diperbarui.');
     }
 
-    /**
-     * Fitur Keluarkan Siswa (Update Status jadi Nonaktif)
-     */
     public function keluar($id)
     {
         $siswa = Siswa::findOrFail($id);
         $siswa->update(['status' => 'nonaktif']);
-
         return back()->with('success', 'Siswa ' . $siswa->nama_siswa . ' berhasil dinonaktifkan.');
     }
 
-    /**
-     * Fitur Hapus Permanen
-     */
     public function destroy($id)
     {
         try {
             $siswa = Siswa::findOrFail($id);
             $siswa->delete();
-
-            return back()->with('success', 'Data siswa berhasil dihapus permanen dari sistem.');
+            return back()->with('success', 'Data siswa berhasil dihapus permanen.');
         } catch (\Exception $e) {
-            return back()->with('error', 'Gagal menghapus data. Siswa mungkin masih memiliki riwayat peminjaman.');
+            return back()->with('error', 'Gagal menghapus. Data ini mungkin terhubung dengan transaksi lain.');
         }
     }
 
-    public function export() 
+    public function export(Request $request) 
     {
-        return Excel::download(new SiswaExport, 'data-siswa.xlsx');
+        $filters = [
+            'search'   => $request->query('search'),
+            'kelas_id' => $request->query('kelas_id')
+        ];
+        return Excel::download(new SiswaExport($filters), 'data-siswa.xlsx');
     }
 
     public function import(Request $request) 
     {
         $request->validate([
-            'file' => 'required|mimes:xlsx,xls,csv'
+            'file' => 'required|mimes:xlsx,xls,csv',
+            'kelas_id' => 'required|exists:kelas,id'
         ]);
 
-        Excel::import(new SiswaImport, $request->file('file'));
-        
-        return back()->with('success', 'Data Siswa Berhasil Diimport!');
+        try {
+            Excel::import(new SiswaImport($request->kelas_id), $request->file('file'));
+            return back()->with('success', 'Data Siswa Berhasil Diimport!');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Terjadi kesalahan saat import. Pastikan format kolom Excel sudah benar.');
+        }
     }
 
     public function downloadTemplate()
     {
-        // Ambil semua nama kelas yang ada untuk dijadikan panduan
         $daftarKelas = Kelas::pluck('nama_kelas')->toArray();
         $stringKelas = implode(', ', $daftarKelas);
 
         $data = [
-            ['nis', 'nama_siswa', 'nama_kelas', 'unique_id'], // Baris 1: Header
-            ['10223001', 'Contoh Nama Siswa', $daftarKelas[0] ?? 'Isi Sesuai Daftar', ''], // Baris 2: Contoh
-            ['', '', '', ''],
-            ['--- DAFTAR NAMA KELAS YANG TERDAFTAR (JANGAN DIHAPUS) ---'],
+            ['nis', 'nama_siswa'], // Header disederhanakan karena kelas_id diambil dari modal
+            ['10223001', 'Nama Siswa Contoh'],
+            ['', ''],
+            ['INFO: Kolom kelas tidak diperlukan karena Anda akan memilih kelas di sistem sebelum upload.'],
+            ['DAFTAR KELAS TERSEDIA:'],
             [$stringKelas]
         ];
         

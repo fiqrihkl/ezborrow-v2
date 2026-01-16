@@ -80,16 +80,6 @@
         transform: rotateY(180deg);
     }
 
-    .unified-card::after {
-        content: "";
-        position: absolute;
-        top: 0; left: 0; right: 0;
-        height: 6px;
-        background: linear-gradient(90deg, var(--primary-color), var(--success-color));
-        z-index: 10;
-        border-radius: 30px 30px 0 0;
-    }
-
     /* Stepper Modern */
     .stepper { 
         display: flex; justify-content: space-between; 
@@ -158,6 +148,38 @@
         .scanner-container { width: 170px; height: 170px; }
         .unified-card { padding: 15px; }
     }
+
+    .system-footer {
+    margin-top: auto;
+    padding-top: 20px;
+    border-top: 1px solid rgba(0,0,0,0.05);
+    backface-visibility: hidden;
+}
+
+.footer-tagline {
+    font-size: 10px;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    display: block;
+    margin-bottom: 2px;
+}
+
+/* Fokus Utama: Nama Kontras */
+.dev-name-highlight {
+    color: var(--primary-color);
+    font-weight: 800;
+    font-size: 14px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+}
+
+.footer-sub-text {
+    font-size: 9px;
+    color: #cbd5e1;
+    margin-top: 8px;
+    font-weight: 500;
+}
 </style>
 @endsection
 
@@ -249,12 +271,14 @@
             </div>
 
             <div class="system-footer text-center">
-                <div class="footer-text">
-                    <strong>EZBorrow v2.0</strong> • Digital Library<br>
-                    <span class="text-primary fw-bolder">Developed by Fiqri Haikal</span>
+                <div class="mb-2">
+                    <span class="footer-tagline">Dikembangkan oleh</span>
+                    <div class="dev-name-highlight">FIQRI HAIKAL</div>
+                </div>
+                <div class="footer-sub-text">
+                    <i class="bi bi-cpu-fill me-1"></i> EZBorrow v2.0 &bull; © 2026
                 </div>
             </div>
-            
         </div>
     </div>
 </div>

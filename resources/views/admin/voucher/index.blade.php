@@ -23,6 +23,7 @@
     </div>
 
     <div class="row g-4">
+        {{-- Sisi Kiri: Monitor Tabel --}}
         <div class="col-lg-7">
             <div class="card border-0 shadow-sm rounded-4 h-100">
                 <div class="card-header bg-white p-4 border-0">
@@ -68,7 +69,6 @@
                                 <td class="ps-4 text-muted small">{{ $vouchers->firstItem() + $index }}</td>
                                 <td><code class="fw-bold text-primary fs-6 px-2 py-1 bg-primary-subtle rounded">{{ $v->kode_voucher }}</code></td>
                                 <td>
-                                    {{-- PERBAIKAN: Looping relasi Many-to-Many --}}
                                     @forelse($v->kelas as $itemKelas)
                                         <span class="badge bg-info-subtle text-info border border-info-subtle rounded-pill mb-1">
                                             <i class="bi bi-broadcast me-1"></i> {{ $itemKelas->nama_kelas }}
@@ -114,14 +114,15 @@
             </div>
         </div>
 
+        {{-- Sisi Kanan: Form Tambah --}}
         <div class="col-lg-5">
             <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
                 <div class="bg-primary p-4 text-white">
                     <h5 class="fw-bold mb-1"><i class="bi bi-plus-square-fill me-2"></i>Tambah Stok Baru</h5>
-                    <p class="small opacity-75 mb-0">Satu kode bisa digunakan di banyak kelas sekaligus.</p>
+                    <p class="small opacity-75 mb-0">Wajib pilih kelas sebelum menyimpan kode voucher.</p>
                 </div>
                 <div class="card-body p-4">
-                    <form action="{{ route('voucher.store') }}" method="POST" enctype="multipart/form-data">
+                    <form action="{{ route('voucher.store') }}" method="POST" enctype="multipart/form-data" id="form-tambah-voucher">
                         @csrf
                         
                         <div class="mb-4">
@@ -140,9 +141,6 @@
                                 </div>
                                 @endforeach
                             </div>
-                            <small class="text-info d-block mt-2" style="font-size: 0.7rem;">
-                                <i class="bi bi-info-circle-fill me-1"></i> Centang lebih dari satu jika kode voucher berlaku untuk banyak kelas/ISP.
-                            </small>
                         </div>
 
                         <div class="mb-4">
@@ -181,7 +179,7 @@
                             </div>
                         </div>
 
-                        <button type="submit" class="btn btn-primary w-100 rounded-pill fw-bold py-3 shadow border-0">
+                        <button type="button" onclick="validateVoucherForm()" class="btn btn-primary w-100 rounded-pill fw-bold py-3 shadow border-0">
                             <i class="bi bi-cloud-plus-fill me-2"></i>Simpan Stok Voucher
                         </button>
                     </form>
@@ -190,27 +188,19 @@
 
             <div class="p-4 bg-white rounded-4 border-start border-4 border-primary shadow-sm">
                 <h6 class="fw-bold mb-2 small text-dark"><i class="bi bi-shield-check me-2 text-primary"></i>Info Sistem</h6>
-                <p class="small text-muted mb-0" style="font-size: 0.75rem;">Sistem otomatis menyaring kode duplikat secara global. Satu kode unik dapat dipetakan ke berbagai kelas pilihan.</p>
-                <hr class="my-2 opacity-25">
-                <small class="text-muted italic" style="font-size: 0.65rem;">Developed by <strong>Fiqri Haikal</strong></small>
+                <p class="small text-muted mb-0" style="font-size: 0.75rem;">Sistem otomatis menyaring kode duplikat. Satu kode unik dapat dipetakan ke berbagai kelas pilihan.</p>
             </div>
         </div>
     </div>
 </div>
 
 <style>
-    :root {
-        --primary-color: #0d6efd;
-    }
-    
+    :root { --primary-color: #0d6efd; }
     .pagination { margin-bottom: 0; gap: 4px; }
     .page-item .page-link { border-radius: 8px !important; border: 1px solid #e2e8f0; color: #64748b; font-size: 0.8rem; padding: 6px 12px; }
     .page-item.active .page-link { background-color: var(--primary-color) !important; border-color: var(--primary-color) !important; color: #fff !important; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-    
-    .nav-method-wrapper { display: block; width: 100%; overflow: hidden; }
-    .nav-pills .nav-link { color: #64748b; font-weight: 600; font-size: 0.8rem; border: none; background: transparent; transition: all 0.3s ease; }
+    .nav-pills .nav-link { color: #64748b; font-weight: 600; font-size: 0.8rem; border: none; background: transparent; }
     .nav-pills .nav-link.active { background-color: var(--primary-color) !important; color: #fff !important; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-    
     .custom-checkbox .form-check-input:checked { background-color: var(--primary-color); border-color: var(--primary-color); }
     .shadow-xs { box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
     code { font-family: 'Courier New', Courier, monospace; letter-spacing: 0.5px; }
@@ -219,6 +209,55 @@
 
 @section('js')
 <script>
+    /**
+     * Validasi Form sebelum kirim
+     */
+    function validateVoucherForm() {
+        // 1. Cek Checkbox Kelas
+        const selectedKelas = document.querySelectorAll('input[name="kelas_ids[]"]:checked');
+        
+        // 2. Cek Input Data
+        const bulkCodes = document.querySelector('textarea[name="bulk_codes"]').value.trim();
+        const fileInput = document.querySelector('input[name="file_voucher"]').files.length;
+
+        // Validasi Kelas Wajib
+        if (selectedKelas.length === 0) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Pilih Kelas!',
+                text: 'Mohon pilih minimal satu kelas tujuan voucher sebelum menyimpan.',
+                confirmButtonColor: '#0d6efd',
+                customClass: { popup: 'rounded-4' }
+            });
+            return;
+        }
+
+        // Validasi Data Wajib (Teks atau File)
+        if (bulkCodes === "" && fileInput === 0) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Data Kosong!',
+                text: 'Silakan isi kode voucher di kotak teks atau unggah file Excel.',
+                confirmButtonColor: '#0d6efd',
+                customClass: { popup: 'rounded-4' }
+            });
+            return;
+        }
+
+        // Jika lolos validasi, jalankan animasi loading dan submit
+        Swal.fire({
+            title: 'Sedang Menyimpan...',
+            text: 'Mohon tunggu, sedang memproses data voucher.',
+            allowOutsideClick: false,
+            didOpen: () => { Swal.showLoading(); }
+        });
+
+        document.getElementById('form-tambah-voucher').submit();
+    }
+
+    /**
+     * Fungsi Konfirmasi Standard
+     */
     function confirmAction(formId, title, message, icon, confirmColor) {
         Swal.fire({
             title: title,
@@ -230,9 +269,7 @@
             confirmButtonText: 'Ya, Lakukan!',
             cancelButtonText: 'Batal',
             reverseButtons: true,
-            customClass: {
-                popup: 'rounded-4'
-            }
+            customClass: { popup: 'rounded-4' }
         }).then((result) => {
             if (result.isConfirmed) {
                 document.getElementById(formId).submit();

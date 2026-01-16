@@ -121,7 +121,7 @@ class PeminjamanController extends Controller
         })->lockForUpdate()->first();
 
         if (!$voucher) {
-            return redirect()->back()->with('error', 'Stok voucher internet untuk kelas ' . ($siswa->kelas->nama_kelas ?? '') . ' habis!');
+            return redirect()->back()->with('error', 'Stok voucher internet untuk kelas ' . ($siswa->kelas->nama_kelas ?? '') . ' habis! Segera infokan ke Bapak/Ibu Guru');
         }
 
         $kodeVoucher = $voucher->kode_voucher;

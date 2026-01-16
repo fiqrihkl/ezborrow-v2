@@ -24,20 +24,17 @@ Route::get('/', function () {
     return view('index');
 })->name('index');
 
-// 2. Alur Peminjaman Unified (Tahap 1, 2, 3 dalam satu halaman)
+// 2. Alur Peminjaman Unified
 Route::get('/pinjam', [PeminjamanController::class, 'indexPinjam'])->name('pinjam.index');
 Route::get('/scan-kamera', [PeminjamanController::class, 'indexScanKamera'])->name('scan.kamera');
 Route::get('/scan-manual', [PeminjamanController::class, 'indexScanManual'])->name('scan.manual');
 
-// 3. API PENDUKUNG (Sangat Penting untuk Fetch/AJAX)
-// Route ini yang memproses validasi kartu siswa di Step 1 secara real-time
+// 3. API PENDUKUNG (Fetch/AJAX)
 Route::get('/get-siswa-by-qr/{qr_code}', [PeminjamanController::class, 'getSiswaByQr']);
 Route::get('/get-mapel-by-guru/{guru_id}', [PeminjamanController::class, 'getMapel'])->name('get.mapel');
 
-// 4. Eksekusi Transaksi Akhir
+// 4. Eksekusi Transaksi & Pengembalian
 Route::post('/peminjaman/final', [PeminjamanController::class, 'storeFinal'])->name('peminjaman.final');
-
-// Route Pengembalian tetap dipertahankan jika Anda masih menggunakan halaman terpisah untuk kembali
 Route::get('/peminjaman/konfirmasi-kembali/{siswa_id}', [PeminjamanController::class, 'showKonfirmasiKembali'])->name('peminjaman.konfirmasi.kembali');
 Route::put('/peminjaman/kembali/{id}', [PeminjamanController::class, 'updateKembali'])->name('peminjaman.kembali');
 
@@ -53,20 +50,21 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 */
 Route::middleware(['auth'])->prefix('admin')->group(function () {
     
+    // Dashboard Utama
     Route::get('/dashboard', [AdminController::class, 'index'])->name('admin.dashboard');
 
-    // CRUD Master Data
+    // CRUD Master Data (Siswa, Chromebook, Guru, Mapel, Kelas)
     Route::resource('siswa', SiswaController::class);
     Route::resource('chromebook', ChromebookController::class);
     Route::resource('guru', GuruController::class);
     Route::resource('mapel', MapelController::class);
     Route::resource('kelas', KelasController::class);
 
-    // Tambahkan rute ini
-Route::post('/siswa/{id}/keluar', [App\Http\Controllers\SiswaController::class, 'keluar'])->name('siswa.keluar');
-
-// Pastikan rute destroy juga sudah ada
-Route::delete('/siswa/{id}', [App\Http\Controllers\SiswaController::class, 'destroy'])->name('siswa.destroy');
+    // Rute Khusus Siswa (Nonaktifkan & Import/Export)
+    Route::post('/siswa/{id}/keluar', [SiswaController::class, 'keluar'])->name('siswa.keluar');
+    Route::get('/siswa-export', [SiswaController::class, 'export'])->name('siswa.export');
+    Route::post('/siswa-import', [SiswaController::class, 'import'])->name('siswa.import');
+    Route::get('/siswa-template', [SiswaController::class, 'downloadTemplate'])->name('siswa.template');
 
     // Fitur Kenaikan Kelas (Promotion)
     Route::controller(PromotionController::class)->group(function () {
@@ -80,12 +78,7 @@ Route::delete('/siswa/{id}', [App\Http\Controllers\SiswaController::class, 'dest
     Route::post('/voucher-import', [VoucherController::class, 'import'])->name('voucher.import');
     Route::delete('/voucher-clear', [VoucherController::class, 'clearAll'])->name('voucher.clearAll');
 
-    // Import & Export Data
-    Route::get('/siswa-export', [SiswaController::class, 'export'])->name('siswa.export');
-    Route::post('/siswa-import', [SiswaController::class, 'import'])->name('siswa.import');
-    Route::get('/siswa-template', [SiswaController::class, 'downloadTemplate'])->name('siswa.template');
-
-    // Laporan & Riwayat Peminjaman
+    // Laporan & Riwayat Peminjaman (INI YANG DIPANGGIL DI DASHBOARD)
     Route::get('/riwayat', [PeminjamanController::class, 'riwayat'])->name('riwayat.index');
 
     // Pengaturan Sistem
