@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Guru;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class GuruController extends Controller
 {
@@ -22,8 +23,10 @@ class GuruController extends Controller
     {
         $validated = $request->validate([
             'nama_guru' => 'required|string|max:255',
-            // NIP diubah menjadi nullable agar boleh kosong
             'nip'       => 'nullable|unique:gurus,nip', 
+        ], [
+            'nama_guru.required' => 'Nama lengkap guru wajib diisi.',
+            'nip.unique'         => 'NIP sudah terdaftar di sistem!',
         ]);
 
         Guru::create($validated);
@@ -39,8 +42,10 @@ class GuruController extends Controller
     {
         $validated = $request->validate([
             'nama_guru' => 'required|string|max:255',
-            // NIP diubah menjadi nullable agar tetap bisa dikosongkan saat edit
             'nip'       => 'nullable|unique:gurus,nip,' . $guru->id,
+        ], [
+            'nama_guru.required' => 'Nama lengkap guru wajib diisi.',
+            'nip.unique'         => 'NIP sudah digunakan oleh guru lain!',
         ]);
 
         $guru->update($validated);
@@ -49,7 +54,22 @@ class GuruController extends Controller
 
     public function destroy(Guru $guru)
     {
-        $guru->delete();
-        return back()->with('success', 'Data Guru berhasil dihapus.');
+        try {
+            DB::transaction(function () use ($guru) {
+                // 1. Lepas jabatan sebagai Wali Kelas (Tabel Kelas)
+                DB::table('kelas')->where('guru_id', $guru->id)->update(['guru_id' => null]);
+
+                // 2. Hapus riwayat peminjaman terkait guru ini
+                DB::table('peminjamans')->where('guru_id', $guru->id)->delete();
+
+                // 3. Hapus data utama guru
+                $guru->delete();
+            });
+
+            return redirect()->route('guru.index')->with('success', 'Data Guru dan seluruh riwayat terkait berhasil dihapus.');
+
+        } catch (\Exception $e) {
+            return redirect()->route('guru.index')->with('error', 'Gagal menghapus data: ' . $e->getMessage());
+        }
     }
 }

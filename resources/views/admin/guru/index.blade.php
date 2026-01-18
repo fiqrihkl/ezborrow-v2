@@ -46,13 +46,17 @@
                                 <a href="{{ route('guru.edit', $guru->id) }}" class="btn btn-sm btn-white border-0" title="Edit">
                                     <i class="bi bi-pencil-square text-warning"></i>
                                 </a>
-                                <form action="{{ route('guru.destroy', $guru->id) }}" method="POST" onsubmit="return confirm('Hapus data guru ini?')" class="d-inline">
-                                    @csrf @method('DELETE')
-                                    <button type="submit" class="btn btn-sm btn-white border-0 border-start" title="Hapus">
-                                        <i class="bi bi-trash3 text-danger"></i>
-                                    </button>
-                                </form>
+                                <button type="button" class="btn btn-sm btn-white border-0 border-start" 
+                                        onclick="confirmDeleteGuru('{{ $guru->id }}', '{{ $guru->nama_guru }}')" title="Hapus">
+                                    <i class="bi bi-trash3 text-danger"></i>
+                                </button>
                             </div>
+
+                            {{-- Form Hapus Tersembunyi --}}
+                            <form action="{{ route('guru.destroy', $guru->id) }}" method="POST" id="form-hapus-guru-{{ $guru->id }}" style="display:none;">
+                                @csrf 
+                                @method('DELETE')
+                            </form>
                         </td>
                     </tr>
                     @empty
@@ -67,7 +71,6 @@
             </table>
         </div>
         
-        {{-- Bagian Pagination: Diselaraskan dengan Kelas/Siswa --}}
         @if($gurus->hasPages())
         <div class="card-footer bg-card border-0 py-4 px-4">
             <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
@@ -84,24 +87,71 @@
 </div>
 
 <style>
-    /* Mengikuti gaya yang sama dengan siswa/index dan kelas/index */
     .text-main { color: var(--text-main) !important; }
     .bg-card { background-color: var(--card-bg) !important; }
-
     .pagination { margin-bottom: 0; gap: 4px; flex-wrap: wrap; justify-content: center; }
     .page-item .page-link { border-radius: 8px !important; border: 1px solid #eef2f7; color: #64748b; font-weight: 600; font-size: 0.8rem; padding: 6px 12px; }
     .page-item.active .page-link { background-color: var(--primary-color) !important; border-color: var(--primary-color) !important; color: #fff !important; }
-    
     .btn-white { background: var(--card-bg); color: var(--text-main); }
-    .shadow-xs { box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
     .italic { font-style: italic; }
-
-    /* Custom scrollbar untuk table-responsive */
-    .table-responsive::-webkit-scrollbar { height: 6px; }
-    .table-responsive::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-
-    @media (max-width: 576px) {
-        .card { border-radius: 1rem !important; }
-    }
 </style>
+
+{{-- SweetAlert2 Notifikasi & Konfirmasi --}}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    // 1. Notifikasi Sukses/Error dari Session
+    @if(session('success'))
+        Swal.fire({
+            icon: 'success',
+            title: 'Berhasil',
+            text: "{{ session('success') }}",
+            timer: 3000,
+            showConfirmButton: false
+        });
+    @endif
+
+    @if(session('error'))
+        Swal.fire({
+            icon: 'error',
+            title: 'Gagal',
+            text: "{{ session('error') }}",
+        });
+    @endif
+
+    // 2. Fungsi Konfirmasi Hapus
+    function confirmDeleteGuru(id, name) {
+        Swal.fire({
+            title: 'Yakin Hapus Data Guru?',
+            html: `Apakah Anda yakin ingin menghapus <b>${name}</b>? <br><br> 
+                   <div class="p-3 bg-light rounded-3 text-start small">
+                    <i class="bi bi-exclamation-triangle-fill text-warning me-2"></i> 
+                    <b>Dampak penghapusan:</b><br>
+                    1. Jabatan Wali Kelas akan dikosongkan.<br>
+                    2. Seluruh riwayat peminjaman terkait guru ini akan <b>dihapus permanen</b>.
+                   </div>`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444', 
+            cancelButtonColor: '#64748b', 
+            confirmButtonText: 'Ya, Tetap Hapus',
+            cancelButtonText: 'Tidak, Batal',
+            reverseButtons: true,
+            customClass: {
+                popup: 'rounded-4 border-0'
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Tampilkan loading sebentar sebelum submit
+                Swal.fire({
+                    title: 'Memproses...',
+                    didOpen: () => { Swal.showLoading() },
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    showConfirmButton: false
+                });
+                document.getElementById('form-hapus-guru-' + id).submit();
+            }
+        });
+    }
+</script>
 @endsection

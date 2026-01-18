@@ -65,6 +65,7 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
     Route::get('/siswa-export', [SiswaController::class, 'export'])->name('siswa.export');
     Route::post('/siswa-import', [SiswaController::class, 'import'])->name('siswa.import');
     Route::get('/siswa-template', [SiswaController::class, 'downloadTemplate'])->name('siswa.template');
+    Route::post('/siswa/bulk-delete', [SiswaController::class, 'bulkDelete'])->name('siswa.bulkDelete');
 
     // Fitur Kenaikan Kelas (Promotion)
     Route::controller(PromotionController::class)->group(function () {
