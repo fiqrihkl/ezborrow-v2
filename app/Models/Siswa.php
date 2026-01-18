@@ -9,11 +9,11 @@ class Siswa extends Model
 {
     // Mass assignment protection
     protected $fillable = [
-        'nama_siswa', 
         'nis', 
-        'unique_id', 
+        'nama_siswa', 
         'kelas_id', 
-        'status'
+        'status', 
+        'unique_id'
     ];
 
     /**

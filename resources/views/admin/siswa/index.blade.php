@@ -75,7 +75,16 @@
             </form>
         </div>
     </div>
-
+@if(session('error_import'))
+    <div class="alert alert-danger rounded-4 shadow-sm mb-4">
+        <h6 class="fw-bold"><i class="bi bi-exclamation-triangle-fill me-2"></i> Detail Kesalahan Import:</h6>
+        <ul class="mb-0 small">
+            @foreach(session('error_import') as $error)
+                <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+    </div>
+@endif
     {{-- Tabel --}}
     <form id="form-bulk" action="{{ route('siswa.bulkDelete') }}" method="POST">
         @csrf

@@ -4,15 +4,19 @@ namespace App\Imports;
 
 use App\Models\Siswa;
 use Maatwebsite\Excel\Concerns\ToModel;
-use Maatwebsite\Excel\Concerns\WithHeadingRow;
+use Maatwebsite\Excel\Concerns\WithStartRow; // Untuk mulai dari baris tertentu
+use Maatwebsite\Excel\Concerns\Importable;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
-class SiswaImport implements ToModel, WithHeadingRow
+class SiswaImport implements ToModel, WithStartRow
 {
+    use Importable;
+
     protected $kelas_id;
 
     /**
-     * Konstruktor untuk menerima lemparan kelas_id dari Controller
+     * Konstruktor untuk menerima kelas_id
      */
     public function __construct($kelas_id)
     {
@@ -20,34 +24,37 @@ class SiswaImport implements ToModel, WithHeadingRow
     }
 
     /**
-     * Pemetaan kolom Excel ke Model Siswa
+     * Tentukan mulai dari baris mana (Baris 2)
+     * Baris 1 (Heading) akan diabaikan total
+     */
+    public function startRow(): int
+    {
+        return 2;
+    }
+
+    /**
+     * Pemetaan berdasarkan INDEKS KOLOM
+     * [0] = Kolom A (nis)
+     * [1] = Kolom B (nama_siswa)
+     * [2] = Kolom C (status)
+     * [3] = Kolom D (unique_id)
      */
     public function model(array $row)
     {
-        /**
-         * Penjelasan Array Key (Heading Row):
-         * Laravel Excel secara otomatis mengubah heading menjadi "slug" (huruf kecil & spasi jadi underscore)
-         * - "NIS" menjadi $row['nis']
-         * - "Nama Lengkap" menjadi $row['nama_lengkap']
-         * - "Status" menjadi $row['status']
-         * - "QRCode" menjadi $row['qrcode']
-         */
-
-        // 1. Validasi: Jika NIS atau Nama Lengkap kosong, lewati baris ini
-        if (empty($row['nis']) || empty($row['nama_lengkap'])) {
+        // Jika kolom NIS (A) dan Nama (B) kosong, abaikan baris tersebut
+        if (empty($row[0]) || empty($row[1])) {
             return null;
         }
 
-        // 2. Normalisasi Status: Jika kosong diisi 'aktif', jika ada diubah ke huruf kecil
-        $statusInput = !empty($row['status']) ? strtolower(trim($row['status'])) : 'aktif';
+        // Normalisasi Status (Kolom C)
+        $statusInput = !empty($row[2]) ? strtolower(trim($row[2])) : 'aktif';
 
-        // 3. Simpan ke Database
         return new Siswa([
-            'nis'        => $row['nis'],
-            'nama_siswa' => $row['nama_lengkap'],
-            'kelas_id'   => $this->kelas_id, // Menggunakan kelas dari pilihan modal
+            'nis'        => trim((string)$row[0]), // Kolom A
+            'nama_siswa' => $row[1],               // Kolom B
+            'kelas_id'   => $this->kelas_id, 
             'status'     => $statusInput,
-            'unique_id'  => $row['qrcode'] ?? 'SIS-' . strtoupper(Str::random(8)),
+            'unique_id'  => $row[3] ?? 'SIS-' . strtoupper(Str::random(8)), // Kolom D
         ]);
     }
 }

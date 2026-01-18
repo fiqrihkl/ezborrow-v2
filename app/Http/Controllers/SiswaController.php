@@ -10,6 +10,7 @@ use App\Imports\SiswaImport;
 use Maatwebsite\Excel\Facades\Excel;
 use Maatwebsite\Excel\Concerns\FromArray;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class SiswaController extends Controller
 {
@@ -21,7 +22,8 @@ class SiswaController extends Controller
         if ($request->has('status') && $request->status != '') {
             $query->where('status', $request->status);
         } else {
-            // Default: Aktif & Nonaktif
+            // Default: Tampilkan semua kecuali yang kemungkinan besar tidak perlu (opsional)
+            // Jika ingin default hanya Aktif & Skorsing (nonaktif):
             $query->whereIn('status', ['aktif', 'nonaktif']);
         }
 
@@ -68,7 +70,7 @@ class SiswaController extends Controller
         Siswa::create([
             'nama_siswa' => $request->nama_siswa,
             'nis'        => $request->nis,
-            'unique_id'  => $request->unique_id ?? 'S' . time() . rand(10,99), // Otomatis jika kosong
+            'unique_id'  => $request->unique_id ?? 'S' . time() . rand(10,99),
             'kelas_id'   => $request->kelas_id,
             'status'     => 'aktif',
         ]);
@@ -96,21 +98,13 @@ class SiswaController extends Controller
         return redirect()->route('siswa.index')->with('success', 'Data Siswa berhasil diperbarui.');
     }
 
-    public function keluar($id)
-    {
-        $siswa = Siswa::findOrFail($id);
-        $siswa->update(['status' => 'nonaktif']);
-        return back()->with('success', 'Siswa ' . $siswa->nama_siswa . ' berhasil dinonaktifkan.');
-    }
-
     public function destroy($id)
     {
         try {
             DB::transaction(function () use ($id) {
                 $siswa = Siswa::findOrFail($id);
-                // Hapus riwayat peminjaman siswa ini
+                // Hapus riwayat peminjaman (mencegah error foreign key)
                 DB::table('peminjamans')->where('siswa_id', $id)->delete();
-                // Hapus data siswanya
                 $siswa->delete();
             });
             return back()->with('success', 'Data siswa dan riwayat peminjamannya berhasil dihapus.');
@@ -128,59 +122,63 @@ class SiswaController extends Controller
         return Excel::download(new SiswaExport($filters), 'data-siswa.xlsx');
     }
 
+    /**
+     * PERBAIKAN UTAMA: Fitur Import dengan Validasi Mendalam
+     */
     public function import(Request $request) 
     {
         $request->validate([
             'file' => 'required|mimes:xlsx,xls,csv',
             'kelas_id' => 'required|exists:kelas,id'
+        ], [
+            'file.mimes' => 'Format file harus .xlsx, .xls, atau .csv',
+            'kelas_id.required' => 'Pilih kelas tujuan import terlebih dahulu.'
         ]);
 
         try {
             Excel::import(new SiswaImport($request->kelas_id), $request->file('file'));
             
             return back()->with('success', 'Data Siswa Berhasil Diimport!');
+
         } catch (\Maatwebsite\Excel\Validators\ValidationException $e) {
-            // Menangkap error validasi Excel (misal: NIS duplikat di dalam file)
             $failures = $e->failures();
-            $errorMsg = 'Gagal import: ';
+            $errorDetails = [];
+            
             foreach ($failures as $failure) {
-                $errorMsg .= "Baris " . $failure->row() . " (" . $failure->errors()[0] . "). ";
+                $errorDetails[] = "Baris " . $failure->row() . " (" . $failure->attribute() . "): " . $failure->errors()[0];
             }
-            return back()->with('error', $errorMsg);
+
+            // Simpan error detail ke session untuk ditampilkan di view
+            return back()->with('error_import', $errorDetails)
+                         ->with('error', 'Gagal mengimpor file. Periksa detail kesalahan di bawah.');
+
         } catch (\Illuminate\Database\QueryException $e) {
-            // Menangkap error database (misal: NIS sudah ada di database)
+            // Jika ada Integrity constraint violation (Misal: NIS Duplikat di DB)
             if ($e->errorInfo[1] == 1062) {
                 return back()->with('error', 'Gagal: Ada data NIS atau QRCode yang sudah terdaftar di sistem.');
             }
-            return back()->with('error', 'Terjadi kesalahan teknis pada database. Pastikan format data benar.');
+            return back()->with('error', 'Terjadi kesalahan database saat import.');
+
         } catch (\Exception $e) {
-            // Menangkap error umum lainnya
-            return back()->with('error', 'Gagal mengimpor file. Pastikan kolom Excel sesuai: NIS, Nama Lengkap, Status, QRCode.');
+            Log::error($e->getMessage());
+            return back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
         }
     }
 
     public function downloadTemplate()
     {
-        // Menyediakan header sesuai permintaan: NIS, Nama Lengkap, Status, QRCode
         $data = [
-            ['NIS', 'Nama Lengkap', 'Status', 'QRCode'],
+            ['nis', 'nama_lengkap', 'status', 'qrcode'], // Header harus sesuai dengan mapping di SiswaImport
             ['10223001', 'Puspawati', 'aktif', 'QR001'],
             ['10223002', 'Budi Santoso', 'aktif', 'QR002'],
-            ['', '', '', ''],
-            ['CATATAN PENTING:'],
-            ['- Status harus diisi: aktif / nonaktif / alumni / keluar'],
-            ['- QRCode (unique_id) tidak boleh sama antar siswa.'],
-            ['- Siswa otomatis akan dimasukkan ke kelas yang Anda pilih di sistem.'],
         ];
         
         return Excel::download(new class($data) implements FromArray {
             protected $data;
             public function __construct(array $data) { $this->data = $data; }
             public function array(): array { return $this->data; }
-        }, 'template_siswa_per_kelas.xlsx');
+        }, 'template_import_siswa.xlsx');
     }
-
-    // ... (kode lainnya)
 
     public function bulkDelete(Request $request)
     {
@@ -188,20 +186,14 @@ class SiswaController extends Controller
         if (is_array($ids) && count($ids) > 0) {
             try {
                 DB::transaction(function () use ($ids) {
-                    // Menghapus riwayat peminjaman siswa terlebih dahulu agar tidak error (Integrity Constraint)
                     DB::table('peminjamans')->whereIn('siswa_id', $ids)->delete();
-                    
-                    // Baru menghapus data siswanya
                     Siswa::whereIn('id', $ids)->delete();
                 });
-
-                return back()->with('success', count($ids) . ' data siswa beserta riwayatnya telah dihapus.');
+                return back()->with('success', count($ids) . ' data siswa berhasil dihapus.');
             } catch (\Exception $e) {
-                return back()->with('error', 'Gagal menghapus data. Terjadi kesalahan pada sistem.');
+                return back()->with('error', 'Gagal menghapus data masal.');
             }
         }
         return back()->with('error', 'Pilih data yang ingin dihapus terlebih dahulu.');
     }
-
-    
 }
