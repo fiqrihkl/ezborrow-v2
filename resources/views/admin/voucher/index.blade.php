@@ -7,7 +7,7 @@
     <div class="row mb-4">
         <div class="col-12 d-flex justify-content-between align-items-center">
             <div>
-                <h3 class="fw-bold text-dark mb-1">Manajemen Voucher ISP</h3>
+                <h3 class="fw-bold text-main mb-1">Manajemen Voucher ISP</h3>
                 <p class="text-muted small mb-0">Kelola distribusi kode voucher internet berdasarkan jaringan ISP kelas.</p>
             </div>
             @if($totalVoucher > 0)
@@ -25,11 +25,11 @@
     <div class="row g-4">
         {{-- Sisi Kiri: Monitor Tabel --}}
         <div class="col-lg-7">
-            <div class="card border-0 shadow-sm rounded-4 h-100">
+            <div class="card border-0 shadow-sm rounded-4 h-100 overflow-hidden">
                 <div class="card-header bg-white p-4 border-0">
                     <div class="d-flex justify-content-between align-items-center mb-4">
-                        <h5 class="fw-bold mb-0">Monitor Persediaan</h5>
-                        <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-2 border border-primary-subtle">
+                        <h5 class="fw-bold mb-0 text-main">Monitor Persediaan</h5>
+                        <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-2 border border-primary-subtle shadow-xs">
                             Total Stok: {{ $totalVoucher }} Kode
                         </span>
                     </div>
@@ -37,7 +37,7 @@
                     <div class="p-3 bg-light rounded-4 border border-dashed">
                         <form action="{{ route('voucher.index') }}" method="GET" class="row g-2">
                             <div class="col-md-9">
-                                <select name="kelas_id" class="form-select rounded-pill shadow-xs" onchange="this.form.submit()">
+                                <select name="kelas_id" class="form-select rounded-pill shadow-xs border-0" onchange="this.form.submit()">
                                     <option value="">-- Semua Kelas --</option>
                                     @foreach($kelas as $k)
                                         <option value="{{ $k->id }}" {{ request('kelas_id') == $k->id ? 'selected' : '' }}>
@@ -57,17 +57,19 @@
                     <table class="table table-hover align-middle mb-0">
                         <thead class="bg-light small text-muted">
                             <tr>
-                                <th class="ps-4 py-3">NO</th>
+                                <th class="ps-4 py-3" width="50">NO</th>
                                 <th>KODE VOUCHER</th>
                                 <th>AKSES KELAS (ISP)</th>
                                 <th class="text-end pe-4">AKSI</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody class="border-0">
                             @forelse($vouchers as $index => $v)
                             <tr>
-                                <td class="ps-4 text-muted small">{{ $vouchers->firstItem() + $index }}</td>
-                                <td><code class="fw-bold text-primary fs-6 px-2 py-1 bg-primary-subtle rounded">{{ $v->kode_voucher }}</code></td>
+                                <td class="ps-4">
+                                    <span class="text-muted small">{{ ($vouchers->currentPage() - 1) * $vouchers->perPage() + $loop->iteration }}</span>
+                                </td>
+                                <td><code class="fw-bold text-primary fs-6 px-2 py-1 bg-primary-subtle rounded border border-primary-subtle shadow-xs">{{ $v->kode_voucher }}</code></td>
                                 <td>
                                     @forelse($v->kelas as $itemKelas)
                                         <span class="badge bg-info-subtle text-info border border-info-subtle rounded-pill mb-1">
@@ -91,7 +93,7 @@
                             <tr>
                                 <td colspan="4" class="text-center py-5">
                                     <i class="bi bi-ticket-perforated display-4 text-muted opacity-25 d-block mb-2"></i>
-                                    <p class="text-muted mb-0">Belum ada stok voucher.</p>
+                                    <p class="text-muted mb-0 italic">Belum ada stok voucher.</p>
                                 </td>
                             </tr>
                             @endforelse
@@ -99,13 +101,14 @@
                     </table>
                 </div>
 
+                {{-- Bagian Pagination: Diselaraskan dengan Chromebook/Guru/Kelas --}}
                 @if($vouchers->hasPages())
-                <div class="card-footer bg-white border-0 py-3 px-4">
+                <div class="card-footer bg-card border-0 py-4 px-4">
                     <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
-                        <div class="small text-muted">
+                        <div class="text-muted small order-2 order-md-1">
                             Menampilkan <b>{{ $vouchers->firstItem() }}</b> - <b>{{ $vouchers->lastItem() }}</b> dari <b>{{ $vouchers->total() }}</b> voucher
                         </div>
-                        <div class="pagination-wrapper">
+                        <div class="pagination-container order-1 order-md-2">
                             {{ $vouchers->links('pagination::bootstrap-5') }}
                         </div>
                     </div>
@@ -121,12 +124,12 @@
                     <h5 class="fw-bold mb-1"><i class="bi bi-plus-square-fill me-2"></i>Tambah Stok Baru</h5>
                     <p class="small opacity-75 mb-0">Wajib pilih kelas sebelum menyimpan kode voucher.</p>
                 </div>
-                <div class="card-body p-4">
+                <div class="card-body p-4 bg-card">
                     <form action="{{ route('voucher.store') }}" method="POST" enctype="multipart/form-data" id="form-tambah-voucher">
                         @csrf
                         
                         <div class="mb-4">
-                            <label class="form-label small fw-bold text-dark mb-2">
+                            <label class="form-label small fw-bold text-main mb-2">
                                 <span class="badge bg-primary rounded-circle me-1" style="width:20px; height:20px; padding:2px">1</span> 
                                 Pilih Kelas (Target ISP)
                             </label>
@@ -135,7 +138,7 @@
                                 <div class="form-check custom-checkbox mb-2">
                                     <input class="form-check-input" type="checkbox" name="kelas_ids[]" value="{{ $k->id }}" id="kelas_{{ $k->id }}">
                                     <label class="form-check-label small d-flex justify-content-between align-items-center w-100" for="kelas_{{ $k->id }}">
-                                        <span class="fw-bold">{{ $k->nama_kelas }}</span>
+                                        <span class="fw-bold text-main">{{ $k->nama_kelas }}</span>
                                         <span class="text-muted small italic">Stok: {{ $k->vouchers_count ?? 0 }}</span>
                                     </label>
                                 </div>
@@ -144,7 +147,7 @@
                         </div>
 
                         <div class="mb-4">
-                            <label class="form-label small fw-bold text-dark mb-3">
+                            <label class="form-label small fw-bold text-main mb-3">
                                 <span class="badge bg-primary rounded-circle me-1" style="width:20px; height:20px; padding:2px">2</span> 
                                 Pilih Metode Input
                             </label>
@@ -172,7 +175,7 @@
                                 <div class="tab-pane fade" id="pills-excel">
                                     <div class="p-4 border border-2 border-dashed rounded-4 bg-light text-center">
                                         <i class="bi bi-cloud-arrow-up display-6 text-muted mb-2"></i>
-                                        <input type="file" name="file_voucher" class="form-control form-control-sm" accept=".xlsx,.xls,.csv">
+                                        <input type="file" name="file_voucher" class="form-control form-control-sm shadow-xs" accept=".xlsx,.xls,.csv">
                                         <p class="small text-muted mt-2 mb-0">Kolom A: Kode Voucher</p>
                                     </div>
                                 </div>
@@ -186,8 +189,8 @@
                 </div>
             </div>
 
-            <div class="p-4 bg-white rounded-4 border-start border-4 border-primary shadow-sm">
-                <h6 class="fw-bold mb-2 small text-dark"><i class="bi bi-shield-check me-2 text-primary"></i>Info Sistem</h6>
+            <div class="p-4 bg-card rounded-4 border-start border-4 border-primary shadow-sm">
+                <h6 class="fw-bold mb-2 small text-main"><i class="bi bi-shield-check me-2 text-primary"></i>Info Sistem</h6>
                 <p class="small text-muted mb-0" style="font-size: 0.75rem;">Sistem otomatis menyaring kode duplikat. Satu kode unik dapat dipetakan ke berbagai kelas pilihan.</p>
             </div>
         </div>
@@ -195,32 +198,39 @@
 </div>
 
 <style>
-    :root { --primary-color: #0d6efd; }
-    .pagination { margin-bottom: 0; gap: 4px; }
-    .page-item .page-link { border-radius: 8px !important; border: 1px solid #e2e8f0; color: #64748b; font-size: 0.8rem; padding: 6px 12px; }
-    .page-item.active .page-link { background-color: var(--primary-color) !important; border-color: var(--primary-color) !important; color: #fff !important; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+    /* Mengikuti gaya seragam sistem (Chromebook/Guru/Siswa) */
+    .text-main { color: var(--text-main) !important; }
+    .bg-card { background-color: var(--card-bg) !important; }
+
+    .pagination { margin-bottom: 0; gap: 4px; flex-wrap: wrap; justify-content: center; }
+    .page-item .page-link { border-radius: 8px !important; border: 1px solid #eef2f7; color: #64748b; font-weight: 600; font-size: 0.8rem; padding: 6px 12px; transition: all 0.2s; }
+    .page-item.active .page-link { background-color: var(--primary-color) !important; border-color: var(--primary-color) !important; color: #fff !important; }
+    .page-item:not(.active) .page-link:hover { background-color: #f8f9fa; border-color: var(--primary-color); color: var(--primary-color); }
+
     .nav-pills .nav-link { color: #64748b; font-weight: 600; font-size: 0.8rem; border: none; background: transparent; }
     .nav-pills .nav-link.active { background-color: var(--primary-color) !important; color: #fff !important; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-    .custom-checkbox .form-check-input:checked { background-color: var(--primary-color); border-color: var(--primary-color); }
+    
+    .btn-white { background: var(--card-bg); color: var(--text-main); }
     .shadow-xs { box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
     code { font-family: 'Courier New', Courier, monospace; letter-spacing: 0.5px; }
     .italic { font-style: italic; }
+
+    /* Custom scrollbar */
+    .table-responsive::-webkit-scrollbar { height: 6px; }
+    .table-responsive::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+
+    @media (max-width: 576px) {
+        .card { border-radius: 1rem !important; }
+    }
 </style>
 
 @section('js')
 <script>
-    /**
-     * Validasi Form sebelum kirim
-     */
     function validateVoucherForm() {
-        // 1. Cek Checkbox Kelas
         const selectedKelas = document.querySelectorAll('input[name="kelas_ids[]"]:checked');
-        
-        // 2. Cek Input Data
         const bulkCodes = document.querySelector('textarea[name="bulk_codes"]').value.trim();
         const fileInput = document.querySelector('input[name="file_voucher"]').files.length;
 
-        // Validasi Kelas Wajib
         if (selectedKelas.length === 0) {
             Swal.fire({
                 icon: 'warning',
@@ -232,7 +242,6 @@
             return;
         }
 
-        // Validasi Data Wajib (Teks atau File)
         if (bulkCodes === "" && fileInput === 0) {
             Swal.fire({
                 icon: 'warning',
@@ -244,7 +253,6 @@
             return;
         }
 
-        // Jika lolos validasi, jalankan animasi loading dan submit
         Swal.fire({
             title: 'Sedang Menyimpan...',
             text: 'Mohon tunggu, sedang memproses data voucher.',
@@ -255,9 +263,6 @@
         document.getElementById('form-tambah-voucher').submit();
     }
 
-    /**
-     * Fungsi Konfirmasi Standard
-     */
     function confirmAction(formId, title, message, icon, confirmColor) {
         Swal.fire({
             title: title,

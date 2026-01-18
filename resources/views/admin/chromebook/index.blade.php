@@ -3,33 +3,39 @@
 @section('title', 'Manajemen Chromebook')
 
 @section('content')
-<div class="container-fluid py-4">
+<div class="container-fluid py-3 py-md-4">
+    {{-- Header --}}
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h3 class="fw-bold mb-0 text-dark">Manajemen Chromebook</h3>
-            <p class="text-muted small">Kelola unit dan pantau status perangkat secara real-time</p>
+            <h3 class="fw-bold mb-1 text-main">Manajemen Chromebook</h3>
+            <p class="text-muted small mb-0">Kelola unit dan pantau status perangkat secara real-time</p>
         </div>
         <a href="{{ route('chromebook.create') }}" class="btn btn-primary rounded-pill px-4 shadow-sm fw-bold">
             <i class="bi bi-plus-lg me-1"></i> Unit Baru
         </a>
     </div>
 
+    {{-- Tabel Chromebook --}}
     <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0">
                 <thead class="bg-light text-muted small">
                     <tr>
-                        <th class="ps-4 py-3">NO. UNIT / MEREK</th>
+                        <th class="ps-4 py-3" width="50">NO</th>
+                        <th>NO. UNIT / MEREK</th>
                         <th>QR CODE UNIT</th>
                         <th>LOKER</th>
                         <th>STATUS</th>
-                        <th class="text-end pe-4">AKSI</th>
+                        <th class="text-end pe-4" width="180">AKSI</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody class="border-0">
                     @forelse($units as $unit)
                     <tr>
                         <td class="ps-4">
+                            <span class="text-muted small">{{ ($units->currentPage() - 1) * $units->perPage() + $loop->iteration }}</span>
+                        </td>
+                        <td>
                             <div class="fw-bold text-dark">{{ $unit->no_unit }}</div>
                             <small class="text-muted">{{ $unit->merek }}</small>
                         </td>
@@ -79,11 +85,9 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="5" class="text-center py-5">
-                            <div class="py-4">
-                                <i class="bi bi-laptop display-1 text-muted opacity-25 d-block mb-3"></i>
-                                <span class="text-muted">Data Chromebook tidak ditemukan.</span>
-                            </div>
+                        <td colspan="6" class="text-center py-5">
+                            <i class="bi bi-laptop display-4 text-muted opacity-25 d-block mb-3"></i>
+                            <span class="text-muted italic">Data Chromebook tidak ditemukan.</span>
                         </td>
                     </tr>
                     @endforelse
@@ -91,13 +95,14 @@
             </table>
         </div>
 
+        {{-- Bagian Pagination: Diselaraskan dengan Guru/Kelas/Siswa --}}
         @if($units->hasPages())
-        <div class="card-footer bg-white border-0 py-4 px-4">
-            <div class="d-flex flex-column flex-md-row justify-content-between align-items-center">
-                <div class="text-muted small mb-3 mb-md-0">
-                    Menampilkan <span class="fw-bold text-dark">{{ $units->firstItem() }}</span> sampai <span class="fw-bold text-dark">{{ $units->lastItem() }}</span> dari <span class="fw-bold text-dark">{{ $units->total() }}</span> unit Chromebook
+        <div class="card-footer bg-card border-0 py-4 px-4">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
+                <div class="text-muted small order-2 order-md-1">
+                    Menampilkan <b>{{ $units->firstItem() }}</b> - <b>{{ $units->lastItem() }}</b> dari <b>{{ $units->total() }}</b> unit Chromebook
                 </div>
-                <div class="pagination-container">
+                <div class="pagination-container order-1 order-md-2">
                     {{ $units->links('pagination::bootstrap-5') }}
                 </div>
             </div>
@@ -107,44 +112,33 @@
 </div>
 
 <style>
-    /* Styling Pagination Mewah */
-    .pagination {
-        margin-bottom: 0;
-        gap: 6px;
-    }
-    .page-item .page-link {
-        border-radius: 10px !important;
-        border: 1px solid #eef2f7;
-        color: #64748b;
-        font-weight: 600;
-        font-size: 0.85rem;
-        padding: 8px 16px;
-        transition: all 0.3s ease;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-    }
-    .page-item.active .page-link {
-        background-color: var(--primary-color) !important;
-        border-color: var(--primary-color) !important;
-        color: #fff !important;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        transform: translateY(-2px);
-    }
-    .page-item:not(.active) .page-link:hover {
-        background-color: #f8f9fa;
-        color: var(--primary-color);
-        border-color: var(--primary-color);
-        transform: translateY(-2px);
-    }
-    .page-item.disabled .page-link {
-        background-color: #fcfcfc;
-        color: #cbd5e1;
-    }
+    /* Mengikuti gaya seragam sistem */
+    .text-main { color: var(--text-main) !important; }
+    .bg-card { background-color: var(--card-bg) !important; }
 
-    /* Pendukung UI */
-    .btn-white { background: #fff; }
-    .btn-white:hover { background: #f8f9fa; }
-    .btn-group .btn { padding: 0.5rem 0.9rem; }
+    .pagination { margin-bottom: 0; gap: 4px; flex-wrap: wrap; justify-content: center; }
+    .page-item .page-link { border-radius: 8px !important; border: 1px solid #eef2f7; color: #64748b; font-weight: 600; font-size: 0.8rem; padding: 6px 12px; transition: all 0.2s; }
+    .page-item.active .page-link { background-color: var(--primary-color) !important; border-color: var(--primary-color) !important; color: #fff !important; }
+    .page-item:not(.active) .page-link:hover { background-color: #f8f9fa; border-color: var(--primary-color); color: var(--primary-color); }
+    
+    .btn-white { background: var(--card-bg); color: var(--text-main); }
     .shadow-xs { box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
     .italic { font-style: italic; }
+
+    /* Custom scrollbar */
+    .table-responsive::-webkit-scrollbar { height: 6px; }
+    .table-responsive::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+
+    @media (max-width: 576px) {
+        .card { border-radius: 1rem !important; }
+    }
 </style>
+
+<script>
+    function confirmDelete(formId, itemName) {
+        if (confirm('Apakah Anda yakin ingin menghapus ' + itemName + '?')) {
+            document.getElementById(formId).submit();
+        }
+    }
+</script>
 @endsection
