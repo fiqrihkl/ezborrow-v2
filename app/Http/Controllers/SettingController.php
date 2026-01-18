@@ -8,63 +8,63 @@ use Illuminate\Support\Facades\Storage;
 
 class SettingController extends Controller
 {
-    /**
-     * Menampilkan Halaman Pengaturan
-     */
     public function index()
     {
-        // Mengambil semua setting dan mengubahnya menjadi array key-value
         $settings = Setting::pluck('value', 'key')->all();
-        
         return view('admin.setting.index', compact('settings'));
     }
 
-    /**
-     * Memperbarui Pengaturan Sistem
-     */
     public function update(Request $request)
     {
         // 1. Validasi Input
+        // Jika ingin nama sekolah BISA dihapus/dikosongkan, ganti 'required' menjadi 'nullable'
         $request->validate([
             'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'school_name' => 'required|string|max:255',
+            'school_name' => 'nullable|string|max:255', // Diubah ke nullable
             'school_email' => 'nullable|email',
+            'app_name' => 'nullable|string|max:50',
         ]);
 
-        // 2. Update data teks (Nama Sekolah, Alamat, dll)
-        $data = $request->except(['_token', 'logo']);
+        // 2. Update data teks
+        $data = $request->except(['_token', 'logo', 'remove_logo']);
+        
         foreach ($data as $key => $value) {
+            // Kita gunakan null coalescing untuk memastikan jika input kosong, value di DB jadi string kosong atau null
             Setting::updateOrCreate(
                 ['key' => $key], 
-                ['value' => trim($value)]
+                ['value' => $value !== null ? trim($value) : '']
             );
         }
 
-        // 3. Logika Upload Logo
+        // 3. Logika Hapus Logo
+        if ($request->remove_logo == '1') {
+            $this->deleteOldLogo();
+            Setting::updateOrCreate(['key' => 'school_logo'], ['value' => '']);
+        }
+
+        // 4. Logika Upload Logo Baru
         if ($request->hasFile('logo')) {
-            // Ambil data logo lama dari database
-            $oldLogoSetting = Setting::where('key', 'school_logo')->first();
-
-            if ($oldLogoSetting && $oldLogoSetting->value) {
-                // Hapus file lama dari storage jika ada
-                // Kita hapus prefix '/storage/' agar mendapatkan path aslinya
-                $oldPath = str_replace('/storage/', '', $oldLogoSetting->value);
-                Storage::disk('public')->delete($oldPath);
-            }
-
-            // Simpan file baru ke: storage/app/public/logos
+            $this->deleteOldLogo();
             $path = $request->file('logo')->store('logos', 'public');
-            
-            // Generate URL publik: /storage/logos/namafile.png
             $url = Storage::url($path);
             
-            // Simpan URL ke database
             Setting::updateOrCreate(
                 ['key' => 'school_logo'], 
                 ['value' => $url]
             );
         }
 
-        return redirect()->back()->with('success', 'Selamat! Pengaturan sistem berhasil diperbarui.');
+        return redirect()->back()->with('success', 'Pengaturan sistem berhasil diperbarui.');
+    }
+
+    private function deleteOldLogo()
+    {
+        $oldLogoSetting = Setting::where('key', 'school_logo')->first();
+        if ($oldLogoSetting && !empty($oldLogoSetting->value)) {
+            $oldPath = str_replace('/storage/', '', $oldLogoSetting->value);
+            if (Storage::disk('public')->exists($oldPath)) {
+                Storage::disk('public')->delete($oldPath);
+            }
+        }
     }
 }

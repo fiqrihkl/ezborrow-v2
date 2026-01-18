@@ -38,7 +38,7 @@
                         <form action="{{ route('voucher.index') }}" method="GET" class="row g-2">
                             <div class="col-md-9">
                                 <select name="kelas_id" class="form-select rounded-pill shadow-xs" onchange="this.form.submit()">
-                                    <option value="">-- Semua Kelas / ISP --</option>
+                                    <option value="">-- Semua Kelas --</option>
                                     @foreach($kelas as $k)
                                         <option value="{{ $k->id }}" {{ request('kelas_id') == $k->id ? 'selected' : '' }}>
                                             {{ $k->nama_kelas }} (Tersedia: {{ $k->vouchers_count ?? 0 }})
@@ -167,7 +167,7 @@
                             <div class="tab-content" id="pills-tabContent">
                                 <div class="tab-pane fade show active" id="pills-bulk">
                                     <textarea name="bulk_codes" class="form-control border-0 bg-light rounded-4 p-3 shadow-xs" rows="6" 
-                                        placeholder="Tempel kode di sini (satu kode per baris)..."></textarea>
+                                        placeholder="Masukkan Voucher di sini (satu voucher per baris)..."></textarea>
                                 </div>
                                 <div class="tab-pane fade" id="pills-excel">
                                     <div class="p-4 border border-2 border-dashed rounded-4 bg-light text-center">

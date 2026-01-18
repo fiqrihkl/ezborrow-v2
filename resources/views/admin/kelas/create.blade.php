@@ -11,7 +11,7 @@
                         @csrf
                         <div class="mb-3">
                             <label class="form-label small fw-bold">Nama Kelas</label>
-                            <input type="text" name="nama_kelas" class="form-control" placeholder="Contoh: VII-A" required>
+                            <input type="text" name="nama_kelas" class="form-control" placeholder="Contoh: VII A" required>
                         </div>
                         <div class="mb-4">
                             <label class="form-label small fw-bold">Pilih Wali Kelas</label>

@@ -16,7 +16,7 @@
     
     {{-- PWA Meta Tags --}}
     <link rel="manifest" href="{{ asset('manifest.json') }}">
-    <meta name="theme-color" content="#4361ee">
+    <meta name="theme-color" content="{{ $sys_settings['primary_color'] ?? '#4361ee' }}">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
 
@@ -28,8 +28,10 @@
 
     <style>
         :root {
-            --primary-color: {{ $sys_settings['primary_color'] ?? '#0d6efd' }};
+            /* Warna Dinamis dari Pengaturan Sistem */
+            --primary-color: {{ $sys_settings['primary_color'] ?? '#4361ee' }};
             --secondary-color: {{ $sys_settings['secondary_color'] ?? '#ffc107' }};
+            
             --sidebar-width: 280px;
             /* Light Mode Variables */
             --bg-body: #f4f7fe;
@@ -41,9 +43,9 @@
         }
 
         [data-theme="dark"] {
-            --bg-body: #0b1120;     /* Lebih gelap pekat untuk kontras */
+            --bg-body: #0b1120;
             --bg-sidebar: #111827;
-            --text-main: #f8fafc;   /* Putih bersih */
+            --text-main: #f8fafc;
             --text-muted: #94a3b8;
             --border-color: #1f2937;
             --card-bg: #1e293b;
@@ -87,12 +89,13 @@
         }
 
         .brand-logo {
-            height: 50px; width: 50px;
+            height: 55px; width: 55px;
             object-fit: contain;
             background: #f8fafc;
             padding: 5px; border-radius: 12px;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            display: inline-block;
         }
 
         .sidebar-nav {
@@ -119,6 +122,13 @@
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }
 
+        /* Penerapan Tema Warna ke Elemen Bootstrap */
+        .btn-primary { 
+            background-color: var(--primary-color) !important; 
+            border-color: var(--primary-color) !important; 
+        }
+        .text-primary { color: var(--primary-color) !important; }
+
         .theme-switch-wrapper {
             padding: 1rem; border-top: 1px solid var(--border-color);
             display: flex; align-items: center; justify-content: space-between;
@@ -137,8 +147,6 @@
             .main-content { margin-left: 0; }
             .sidebar.show { margin-left: 0; box-shadow: 10px 0 30px rgba(0,0,0,0.1); }
         }
-
-        .btn-primary { background-color: var(--primary-color) !important; border-color: var(--primary-color) !important; }
     </style>
     @yield('css')
 </head>
@@ -152,11 +160,13 @@
         @if(!$isPublicPage)
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-brand">
-                @if(isset($sys_settings['school_logo']))
+                {{-- PERBAIKAN: Hanya render <img> jika school_logo ada harganya di database --}}
+                @if(!empty($sys_settings['school_logo']))
                     <img src="{{ asset($sys_settings['school_logo']) }}" alt="Logo" class="brand-logo">
                 @endif
+                
                 <h6 class="fw-bold mb-0 text-dark">{{ $sys_settings['app_name'] ?? 'EZBorrow' }}</h6>
-                <small class="text-muted">{{ $sys_settings['school_name'] ?? 'Admin Panel' }}</small>
+                <small class="text-muted d-block mt-1">{{ $sys_settings['school_name'] ?? 'Admin Panel' }}</small>
             </div>
             
             <div class="sidebar-nav">
@@ -197,7 +207,6 @@
                     <i class="bi bi-gear-fill"></i> Pengaturan
                 </a>
 
-                {{-- Tombol Install PWA --}}
                 <div id="install-banner" style="display: none;" class="px-3 mt-2">
                     <button id="btnInstall" class="btn btn-primary w-100 rounded-pill small py-2">
                         <i class="bi bi-download me-2"></i>Install App
@@ -230,7 +239,7 @@
         @auth @if(!$isPublicPage)
             <div class="d-lg-none mb-3 d-flex align-items-center justify-content-between p-2 bg-white rounded-3 shadow-sm">
                 <button class="btn btn-white" id="toggleSidebar"><i class="bi bi-list fs-3"></i></button>
-                <h6 class="fw-bold mb-0 text-dark">EZBorrow</h6>
+                <h6 class="fw-bold mb-0 text-dark">{{ $sys_settings['app_name'] ?? 'EZBorrow' }}</h6>
                 <div style="width: 40px;"></div>
             </div>
         @endif @endauth

@@ -7,7 +7,7 @@
     {{-- Header Dashboard --}}
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
         <div>
-            <h3 class="fw-bold text-main mb-1">Ringkasan Sistem</h3>
+            <h3 class="fw-bold text-main mb-1">Dashboard Sistem</h3>
             <p class="text-muted small mb-0">Pantau penggunaan unit dan stok voucher secara real-time.</p>
         </div>
     </div>
