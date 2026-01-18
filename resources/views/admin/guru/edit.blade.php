@@ -23,15 +23,16 @@
                         @method('PUT')
                         
                         <div class="mb-3">
-                            <label class="form-label fw-bold small">NIP (Nomor Induk Pegawai)</label>
+                            <label class="form-label fw-bold small">NIP (Nomor Induk Pegawai) <span class="text-muted fw-normal">(Opsional)</span></label>
+                            {{-- Atribut 'required' dihapus untuk membuat NIP menjadi opsional --}}
                             <input type="text" name="nip" 
                                    class="form-control @error('nip') is-invalid @enderror" 
                                    value="{{ old('nip', $guru->nip) }}" 
-                                   placeholder="Masukkan NIP..." required>
+                                   placeholder="Masukkan NIP (kosongkan jika tidak ada)...">
                             @error('nip') 
                                 <div class="invalid-feedback">{{ $message }}</div> 
                             @enderror
-                            <small class="text-muted">NIP harus unik dan tidak boleh sama dengan guru lain.</small>
+                            <small class="text-muted">Jika diisi, NIP harus unik dan tidak boleh sama dengan guru lain.</small>
                         </div>
 
                         <div class="mb-4">
