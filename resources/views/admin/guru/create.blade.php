@@ -16,8 +16,9 @@
                     <form action="{{ route('guru.store') }}" method="POST">
                         @csrf
                         <div class="mb-3">
-                            <label class="form-label fw-bold small">NIP (Nomor Induk Pegawai)</label>
-                            <input type="text" name="nip" class="form-control @error('nip') is-invalid @enderror" placeholder="Masukkan NIP..." value="{{ old('nip') }}" required autofocus>
+                            <label class="form-label fw-bold small">NIP (Nomor Induk Pegawai) <span class="text-muted fw-normal">(Opsional)</span></label>
+                            {{-- Atribut 'required' telah dihapus di bawah ini --}}
+                            <input type="text" name="nip" class="form-control @error('nip') is-invalid @enderror" placeholder="Masukkan NIP (kosongkan jika tidak ada)..." value="{{ old('nip') }}" autofocus>
                             @error('nip') <div class="invalid-feedback">{{ $message }}</div> @enderror
                         </div>
                         <div class="mb-4">

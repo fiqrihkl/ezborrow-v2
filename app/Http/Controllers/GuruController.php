@@ -22,7 +22,8 @@ class GuruController extends Controller
     {
         $validated = $request->validate([
             'nama_guru' => 'required|string|max:255',
-            'nip'       => 'required|unique:gurus,nip',
+            // NIP diubah menjadi nullable agar boleh kosong
+            'nip'       => 'nullable|unique:gurus,nip', 
         ]);
 
         Guru::create($validated);
@@ -38,7 +39,8 @@ class GuruController extends Controller
     {
         $validated = $request->validate([
             'nama_guru' => 'required|string|max:255',
-            'nip'       => 'required|unique:gurus,nip,' . $guru->id,
+            // NIP diubah menjadi nullable agar tetap bisa dikosongkan saat edit
+            'nip'       => 'nullable|unique:gurus,nip,' . $guru->id,
         ]);
 
         $guru->update($validated);
