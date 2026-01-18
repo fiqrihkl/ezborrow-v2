@@ -189,6 +189,9 @@
                 <a href="{{ route('kelas.index') }}" class="nav-link {{ request()->routeIs('kelas.*') ? 'active' : '' }}">
                     <i class="bi bi-door-open-fill"></i> Data Kelas
                 </a>
+                <a href="{{ route('mapel.index') }}" class="nav-link {{ request()->routeIs('mapel.*') ? 'active' : '' }}">
+                    <i class="bi bi-book-half"></i> Data Mata Pelajaran
+                </a>
                 <a href="{{ route('siswa.index') }}" class="nav-link {{ request()->routeIs('siswa.*') ? 'active' : '' }}">
                     <i class="bi bi-people-fill"></i> Data Siswa
                 </a>
