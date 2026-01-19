@@ -121,45 +121,41 @@
 @section('js')
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-    function confirmDeleteMapel(id, name) {
-        Swal.fire({
-            title: 'Hapus Mata Pelajaran?',
-            html: `
-                <div class="text-center">
-                    <p>Anda akan menghapus mapel <b>${name}</b>.</p>
-                    <div class="alert alert-danger small rounded-3 border-0">
-                        <i class="bi bi-exclamation-triangle-fill me-1"></i> 
-                        <strong>Peringatan Penting:</strong> Menghapus data ini akan memutus hubungan dengan guru pengampu, menghapus data nilai, dan jadwal yang berkaitan dengan mata pelajaran ini secara permanen.
-                    </div>
-                    <p class="mb-0 small text-muted">Apakah Anda yakin ingin melanjutkan?</p>
+    // Ganti bagian fungsi confirmDeleteMapel di index.blade.php
+
+function confirmDeleteMapel(id, name) {
+    Swal.fire({
+        title: 'HAPUS DATA PERMANEN?',
+        html: `
+            <div class="text-center">
+                <p>Anda akan menghapus Mapel: <b>${name}</b></p>
+                <div class="alert alert-danger rounded-3 border-0 shadow-sm small">
+                    <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                    <strong>PERINGATAN KERAS:</strong><br>
+                    Data ini memiliki riwayat peminjaman. Jika Ibu menghapus mapel ini, maka 
+                    <b>SEMUA RIWAYAT PEMINJAMAN</b> yang terkait akan <b>IKUT TERHAPUS</b> dan tidak bisa dikembalikan.
                 </div>
-            `,
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#ef4444',
-            cancelButtonColor: '#64748b',
-            confirmButtonText: 'Ya, Hapus Permanen!',
-            cancelButtonText: 'Batal',
-            reverseButtons: true,
-            customClass: {
-                popup: 'rounded-4 border-0 shadow-lg',
-                confirmButton: 'rounded-pill px-4',
-                cancelButton: 'rounded-pill px-4'
-            }
-        }).then((result) => {
-            if (result.isConfirmed) {
-                // Tampilkan loading saat proses hapus
-                Swal.fire({
-                    title: 'Sedang menghapus...',
-                    allowOutsideClick: false,
-                    didOpen: () => {
-                        Swal.showLoading()
-                    }
-                });
-                document.getElementById('delete-form-' + id).submit();
-            }
-        });
-    }
+                <p class="mb-0 small text-muted">Tetap hapus mapel dan riwayatnya?</p>
+            </div>
+        `,
+        icon: 'error', // Icon error agar terlihat lebih serius
+        showCancelButton: true,
+        confirmButtonColor: '#d33', // Warna merah tegas
+        cancelButtonColor: '#64748b',
+        confirmButtonText: 'Ya, Hapus Semua!',
+        cancelButtonText: 'Batal',
+        reverseButtons: true
+    }).then((result) => {
+        if (result.isConfirmed) {
+            Swal.fire({
+                title: 'Sedang memproses...',
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading() }
+            });
+            document.getElementById('delete-form-' + id).submit();
+        }
+    });
+}
 
     // Menampilkan notifikasi sukses jika ada session success
     @if(session('success'))

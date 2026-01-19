@@ -60,8 +60,22 @@ class MapelController extends Controller
 
     public function destroy(Mapel $mapel)
     {
-        $mapel->gurus()->detach(); 
-        $mapel->delete();
-        return back()->with('success', 'Mapel berhasil dihapus.');
+        try {
+            // 1. Hapus relasi dengan Guru di tabel pivot (guru_mapel)
+            $mapel->gurus()->detach();
+
+            // 2. Hapus semua data peminjaman yang terhubung dengan mapel ini
+            // Ini akan mencegah error 'Integrity constraint violation'
+            if ($mapel->peminjamans()->exists()) {
+                $mapel->peminjamans()->delete();
+            }
+
+            // 3. Terakhir, hapus data Mapel itu sendiri
+            $mapel->delete();
+
+            return back()->with('success', 'Mapel dan semua riwayat terkait berhasil dihapus permanen.');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+        }
     }
 }
