@@ -29,7 +29,6 @@
         padding: 25px;
     }
 
-    /* Perbaikan Area Kamera Scanner */
     .scanner-container {
         position: relative;
         width: 100%;
@@ -39,7 +38,7 @@
     .scanner-wrapper {
         position: relative; 
         width: 100%; 
-        aspect-ratio: 1/1; /* Memastikan frame selalu kotak */
+        aspect-ratio: 1/1; 
         margin: 0 auto;
         border-radius: 20px; 
         overflow: hidden;
@@ -48,7 +47,6 @@
         box-shadow: 0 8px 15px rgba(0,0,0,0.1);
     }
     
-    /* Memaksa video html5-qrcode agar memenuhi container tanpa distorsi */
     #reader { width: 100% !important; height: 100% !important; border: none !important; }
     #reader video { 
         object-fit: cover !important; 
@@ -56,7 +54,6 @@
         height: 100% !important; 
     }
     
-    /* Overlay pemanis scanner */
     .scanner-overlay {
         position: absolute; inset: 0; z-index: 5;
         border: 40px solid rgba(0,0,0,0.3); pointer-events: none;
@@ -70,10 +67,9 @@
     }
     @keyframes scanAnim { 0%, 100% { top: 25%; opacity: 0.3; } 50% { top: 75%; opacity: 1; } }
 
-    /* Button Switch Kamera di Bawah Frame */
     .btn-switch-camera {
         margin: 10px auto 0;
-        display: none; /* Muncul via JS */
+        display: none; 
         align-items: center;
         justify-content: center;
         gap: 8px;
@@ -106,7 +102,6 @@
     }
     .btn-save:hover { background: var(--primary-light); transform: translateY(-2px); }
 
-    /* Responsive Mobile */
     @media (max-width: 480px) {
         .unified-card { padding: 20px; border-radius: 20px; }
         .scanner-overlay { border-width: 25px; }
@@ -120,7 +115,7 @@
             <p class="text-muted small">Scan QR Code pada perangkat Chromebook</p>
         </div>
 
-        <form action="{{ route('chromebook.store') }}" method="POST">
+        <form action="{{ route('chromebook.store') }}" method="POST" id="chromebookForm">
             @csrf
             
             <div class="scanner-container">
@@ -130,7 +125,6 @@
                     <div class="laser-line"></div>
                 </div>
 
-                {{-- Tombol Switch diletakkan di bawah frame kamera --}}
                 <button type="button" id="switchCameraBtn" class="btn-switch-camera">
                     <i class="bi bi-camera-rotate fs-5"></i>
                     <span>Ganti Kamera</span>
@@ -152,11 +146,19 @@
             <div class="row g-2">
                 <div class="col-6 mb-3">
                     <label class="form-label small fw-bold text-secondary">MEREK</label>
-                    <input type="text" name="merek" class="form-control custom-input" placeholder="Zyrex, Evercoss ..." required>
+                    <input type="text" name="merek" class="form-control custom-input" placeholder="Contoh : Zyrex..." required>
                 </div>
                 <div class="col-6 mb-3">
                     <label class="form-label small fw-bold text-secondary">LOKER</label>
-                    <input type="text" name="posisi_loker" class="form-control custom-input" placeholder="01">
+                    {{-- PERUBAHAN DISINI: inputmode dan pattern untuk memunculkan keyboard angka --}}
+                    <input type="text" 
+                           name="posisi_loker" 
+                           id="posisi_loker"
+                           inputmode="numeric" 
+                           pattern="[0-9]*"
+                           class="form-control custom-input" 
+                           placeholder="Contoh : 1"
+                           required>
                 </div>
             </div>
 
@@ -187,7 +189,6 @@
     window.addEventListener('load', function () {
         html5QrCode = new Html5Qrcode("reader");
         
-        // Cek jumlah kamera
         Html5Qrcode.getCameras().then(devices => {
             if (devices && devices.length > 1) {
                 const switchBtn = document.getElementById('switchCameraBtn');
@@ -197,12 +198,22 @@
             startScanner();
         }).catch(err => {
             console.error("Gagal deteksi kamera", err);
-            startScanner(); // Coba running saja meski deteksi gagal
+            startScanner();
+        });
+
+        // FITUR BARU: Tekan Enter di input Loker untuk submit form
+        const lokerInput = document.getElementById('posisi_loker');
+        const mainForm = document.getElementById('chromebookForm');
+
+        lokerInput.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault(); // Mencegah baris baru jika ada
+                mainForm.submit(); // Kirim formulir
+            }
         });
     });
 
     function startScanner() {
-        // Pengaturan config yang lebih fleksibel untuk mobile
         const config = { 
             fps: 15, 
             qrbox: (viewfinderWidth, viewfinderHeight) => {
@@ -210,7 +221,6 @@
                 const qrboxSize = Math.floor(minEdge * 0.6);
                 return { width: qrboxSize, height: qrboxSize };
             },
-            // Menghapus paksaan aspect ratio agar mengikuti container CSS
             videoConstraints: {
                 facingMode: currentFacingMode
             }
@@ -229,12 +239,9 @@
         if (html5QrCode.isScanning) {
             html5QrCode.stop().then(() => {
                 currentFacingMode = (currentFacingMode === "environment") ? "user" : "environment";
-                
-                // Efek rotasi icon
                 const icon = document.querySelector('#switchCameraBtn i');
                 icon.style.transition = 'transform 0.4s';
                 icon.style.transform = (icon.style.transform === 'rotate(180deg)') ? 'rotate(0deg)' : 'rotate(180deg)';
-                
                 startScanner();
             }).catch(err => console.error("Gagal pindah kamera", err));
         }
@@ -242,18 +249,14 @@
 
     function onScanSuccess(decodedText) {
         if (isLocked) return; 
-        
         isLocked = true;
         
-        // Audio feedback
         if (scanAudio) {
             scanAudio.play().catch(() => {});
         }
 
         const inputField = document.getElementById('qr_code_unit');
         inputField.value = decodedText;
-        
-        // Haptic/Visual Feedback
         inputField.classList.add('is-valid');
         inputField.style.background = '#e8f5e9 !important';
 
@@ -267,7 +270,6 @@
             position: 'top-end'
         });
 
-        // Kunci scanner sebentar agar tidak scan berkali-kali dalam 1 detik
         setTimeout(() => {
             isLocked = false;
         }, 2000);
