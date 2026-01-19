@@ -16,7 +16,7 @@ class MapelController extends Controller
 
     public function create()
     {
-        $gurus = Guru::all(); // Untuk pilihan guru di form
+        $gurus = Guru::all();
         return view('admin.mapel.create', compact('gurus'));
     }
 
@@ -24,13 +24,11 @@ class MapelController extends Controller
     {
         $request->validate([
             'nama_mapel' => 'required|unique:mapels,nama_mapel',
-            'kode_mapel' => 'required|unique:mapels,kode_mapel', // Tambahkan ini
+            'kode_mapel' => 'required|unique:mapels,kode_mapel',
             'guru_ids'   => 'required|array'
         ]);
 
-        // Simpan semua data termasuk deskripsi jika ada
         $mapel = Mapel::create($request->only(['nama_mapel', 'kode_mapel', 'deskripsi']));
-        
         $mapel->gurus()->attach($request->guru_ids);
 
         return redirect()->route('mapel.index')->with('success', 'Mapel berhasil dibuat.');
@@ -39,7 +37,7 @@ class MapelController extends Controller
     public function edit(Mapel $mapel)
     {
         $gurus = Guru::all();
-        $selectedGurus = $mapel->gurus->pluck('id')->toArray(); // Ambil ID guru yang sudah terpilih
+        $selectedGurus = $mapel->gurus->pluck('id')->toArray();
         return view('admin.mapel.edit', compact('mapel', 'gurus', 'selectedGurus'));
     }
 
@@ -47,21 +45,23 @@ class MapelController extends Controller
     {
         $request->validate([
             'nama_mapel' => 'required|unique:mapels,nama_mapel,' . $mapel->id,
+            'kode_mapel' => 'required|unique:mapels,kode_mapel,' . $mapel->id,
             'guru_ids'   => 'required|array'
         ]);
 
-        $mapel->update(['nama_mapel' => $request->nama_mapel]);
+        // Mengupdate semua kolom yang ada di form
+        $mapel->update($request->only(['nama_mapel', 'kode_mapel', 'deskripsi']));
         
-        // Sync akan menghapus yang lama dan mengganti dengan yang baru di pivot
+        // Sinkronisasi Guru Pengampu
         $mapel->gurus()->sync($request->guru_ids);
 
-        return redirect()->route('mapel.index')->with('success', 'Mapel berhasil diupdate.');
+        return redirect()->route('mapel.index')->with('success', 'Mapel berhasil diperbarui.');
     }
 
     public function destroy(Mapel $mapel)
     {
-        $mapel->gurus()->detach(); // Hapus relasi di pivot dulu
+        $mapel->gurus()->detach(); 
         $mapel->delete();
-        return back()->with('success', 'Mapel dihapus.');
+        return back()->with('success', 'Mapel berhasil dihapus.');
     }
 }

@@ -101,36 +101,77 @@
 </div>
 
 <style>
+    :root {
+        --primary-color: #4361ee;
+        --text-main: #2d3748;
+        --card-bg: #ffffff;
+    }
     .text-main { color: var(--text-main) !important; }
     .bg-card { background-color: var(--card-bg) !important; }
     .shadow-xs { box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
     .italic { font-style: italic; }
-    .btn-white { background: var(--card-bg); color: var(--text-main); }
+    .btn-white { background: #fff; color: var(--text-main); }
+    .btn-white:hover { background: #f8fafc; }
     .pagination { margin-bottom: 0; gap: 4px; }
     .page-item .page-link { border-radius: 8px !important; border: 1px solid #eef2f7; color: #64748b; font-weight: 600; font-size: 0.8rem; }
     .page-item.active .page-link { background-color: var(--primary-color) !important; border-color: var(--primary-color) !important; }
 </style>
+@endsection
 
+@section('js')
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
     function confirmDeleteMapel(id, name) {
         Swal.fire({
             title: 'Hapus Mata Pelajaran?',
-            html: `Anda akan menghapus mapel <b>${name}</b>.<br><span class="text-danger small">Tindakan ini mungkin mempengaruhi data nilai atau jadwal terkait.</span>`,
+            html: `
+                <div class="text-center">
+                    <p>Anda akan menghapus mapel <b>${name}</b>.</p>
+                    <div class="alert alert-danger small rounded-3 border-0">
+                        <i class="bi bi-exclamation-triangle-fill me-1"></i> 
+                        <strong>Peringatan Penting:</strong> Menghapus data ini akan memutus hubungan dengan guru pengampu, menghapus data nilai, dan jadwal yang berkaitan dengan mata pelajaran ini secara permanen.
+                    </div>
+                    <p class="mb-0 small text-muted">Apakah Anda yakin ingin melanjutkan?</p>
+                </div>
+            `,
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#ef4444',
             cancelButtonColor: '#64748b',
-            confirmButtonText: 'Ya, Hapus!',
+            confirmButtonText: 'Ya, Hapus Permanen!',
             cancelButtonText: 'Batal',
             reverseButtons: true,
             customClass: {
-                popup: 'rounded-4 border-0'
+                popup: 'rounded-4 border-0 shadow-lg',
+                confirmButton: 'rounded-pill px-4',
+                cancelButton: 'rounded-pill px-4'
             }
         }).then((result) => {
             if (result.isConfirmed) {
+                // Tampilkan loading saat proses hapus
+                Swal.fire({
+                    title: 'Sedang menghapus...',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading()
+                    }
+                });
                 document.getElementById('delete-form-' + id).submit();
             }
         });
     }
+
+    // Menampilkan notifikasi sukses jika ada session success
+    @if(session('success'))
+        Swal.fire({
+            icon: 'success',
+            title: 'Berhasil!',
+            text: "{{ session('success') }}",
+            timer: 3000,
+            showConfirmButton: false,
+            toast: true,
+            position: 'top-end'
+        });
+    @endif
 </script>
 @endsection

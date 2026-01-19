@@ -6,6 +6,7 @@
 <div class="container-fluid py-4">
     <div class="row justify-content-center">
         <div class="col-md-7">
+            {{-- Header --}}
             <div class="d-flex align-items-center mb-4">
                 <a href="{{ route('mapel.index') }}" class="btn btn-white shadow-sm rounded-circle me-3">
                     <i class="bi bi-arrow-left"></i>
@@ -23,6 +24,7 @@
                         @method('PUT')
                         
                         <div class="row g-3">
+                            {{-- Kode Mapel --}}
                             <div class="col-md-4">
                                 <label class="form-label fw-bold small">Kode Mapel</label>
                                 <input type="text" name="kode_mapel" 
@@ -32,6 +34,7 @@
                                 @error('kode_mapel') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
 
+                            {{-- Nama Mapel --}}
                             <div class="col-md-8">
                                 <label class="form-label fw-bold small">Nama Mata Pelajaran</label>
                                 <input type="text" name="nama_mapel" 
@@ -41,6 +44,7 @@
                                 @error('nama_mapel') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
 
+                            {{-- Deskripsi --}}
                             <div class="col-md-12">
                                 <label class="form-label fw-bold small">Deskripsi (Opsional)</label>
                                 <textarea name="deskripsi" class="form-control @error('deskripsi') is-invalid @enderror" 
@@ -48,19 +52,29 @@
                                 @error('deskripsi') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
 
+                            {{-- Guru Pengampu (Sistem Ceklis) --}}
                             <div class="col-md-12">
-                                <label class="form-label fw-bold small">Guru Pengampu</label>
-                                <select name="guru_ids[]" class="form-select @error('guru_ids') is-invalid @enderror" 
-                                        multiple style="height: 180px;" required>
-                                    @foreach($gurus as $g)
-                                        <option value="{{ $g->id }}" 
-                                            {{ in_array($g->id, old('guru_ids', $selectedGurus)) ? 'selected' : '' }}>
-                                            {{ $g->nama_guru }} (NIP: {{ $g->nip }})
-                                        </option>
-                                    @endforeach
-                                </select>
-                                <div class="mt-2 p-2 bg-light rounded border small text-muted">
-                                    <i class="bi bi-info-circle me-1"></i> Tahan <strong>Ctrl</strong> (Windows) atau <strong>Command</strong> (Mac) untuk memilih lebih dari satu guru.
+                                <label class="form-label fw-bold small mb-2">Guru Pengampu</label>
+                                <div class="border rounded-3 p-3 bg-light" style="max-height: 250px; overflow-y: auto;">
+                                    <div class="row g-2">
+                                        @foreach($gurus as $g)
+                                        <div class="col-12 col-sm-6">
+                                            <div class="form-check p-2 border rounded bg-white shadow-sm h-100">
+                                                <input class="form-check-input ms-1" type="checkbox" name="guru_ids[]" 
+                                                       value="{{ $g->id }}" id="guru_{{ $g->id }}"
+                                                       {{ in_array($g->id, old('guru_ids', $selectedGurus)) ? 'checked' : '' }}>
+                                                <label class="form-check-label ms-2 small" for="guru_{{ $g->id }}">
+                                                    <strong>{{ $g->nama_guru }}</strong><br>
+                                                    <span class="text-muted">NIP: {{ $g->nip }}</span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+                                <div class="mt-2 p-2 bg-light-info rounded border-start border-info border-4 small text-muted">
+                                    <i class="bi bi-info-circle-fill text-info me-1"></i> 
+                                    Cukup pilih/centang guru yang mengampu mapel ini.
                                 </div>
                                 @error('guru_ids') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
                             </div>
@@ -70,7 +84,7 @@
 
                         <div class="d-flex justify-content-end gap-2">
                             <a href="{{ route('mapel.index') }}" class="btn btn-light px-4 rounded-pill">Batal</a>
-                            <button type="submit" class="btn btn-warning px-4 rounded-pill fw-bold shadow-sm">
+                            <button type="submit" class="btn btn-warning px-4 rounded-pill fw-bold shadow-sm text-dark">
                                 <i class="bi bi-pencil-square me-2"></i> Perbarui Mapel
                             </button>
                         </div>
@@ -80,4 +94,10 @@
         </div>
     </div>
 </div>
+
+<style>
+    .bg-light-info { background-color: #e7f3ff; }
+    .form-check-input:checked { background-color: #ffc107; border-color: #ffc107; }
+    .form-check:hover { background-color: #fff9e6 !important; border-color: #ffc107 !important; transition: 0.3s; }
+</style>
 @endsection
